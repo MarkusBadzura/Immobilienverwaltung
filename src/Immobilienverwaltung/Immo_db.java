@@ -47,6 +47,63 @@ public class Immo_db
         this.dbname = dbname;
     }
     /**
+     * Neue Immobilie abspeichern.
+     * @param wohnlage_id int JComboBox-Index Wohnlage
+     * @param eigentuemer_id int JComboBox-Index Eigentümer
+     * @param strasse String Strasse der Immobilie
+     * @param plz String Postleitzahl der Immobilie
+     * @param ort String Ort der Immobilie
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    public void saveNewImmobilie(int wohnlage_id, int eigentuemer_id, 
+            String strasse, String plz, String ort)
+    {
+        String query = "INSERT INTO immobilien (immboliliennummer,wohnlage_id,eigentuemer_id,strasse, plz, ort) VALUES (null,";
+        query = query + "'"+(wohnlage_id)+"'," + "'"+(eigentuemer_id)+"'," 
+                + "'"+strasse+"'," + "'"+plz+"'," + "'"+ort+"');";
+        System.out.println(query);
+        openDB();
+        insertDB(query);
+        closeDB();        
+    }
+    /**
+     * Neuen Eigentümer abspeichern
+     * @param titel int JComboBox-Index Titel
+     * @param anrede int JComboBox-Index Anrede
+     * @param nachname String Nachname des Eigentümers
+     * @param vorname String Vorname des Eigentümers
+     * @param strasse String Strasse des Eigentümers
+     * @param plz String Postleitzahl des Eigentümers
+     * @param ort String Ort des Eigentümers
+     * @param gebtag String Geburtstag des Eigentümers
+     * @param telefon String Telefonnummer des Eigentümers
+     * @param eMail String eMail-Adresse des Eigentümers
+     */
+    public void saveNewEigentuemer(int titel, int anrede, String nachname, String vorname,
+            String strasse, String plz, String ort, String gebtag, String telefon,
+            String eMail)
+    {
+        String query ="INSERT INTO eigentuemer(eigentuemer_id,titel,anrede,nachname,"
+                + "vorname,strasse,plz,ort,geburtstag,telefon,eMail) VALUES (null,";
+        if (titel==0)
+        {
+            query = query + "null,";
+        }
+        else
+        {
+            query = query +"'"+(titel)+"',";
+        }
+        query = query + "'"+(anrede)+"'," + "'"+nachname+"'," + "'"+vorname+"',"
+                + "'"+strasse+"'," + "'"+plz+"'," + "'"+ort+"'," + "'"+gebtag+"'," 
+                + "'"+telefon+"'," + "'"+eMail+"');";
+                    System.out.println(query);
+            openDB();
+            insertDB(query);
+            closeDB();    
+
+    }
+    /**
      * Vorhandene Immobilienanzahl ermitteln
      * @return immoNr String
      * @author Markus Badzura
@@ -57,12 +114,12 @@ public class Immo_db
         String immoNr = "";
         String query = "SELECT Count(*) FROM immobilien";
         openDB();
-        ResultSet tempRs = selectDB(query); 
+        resultSet = selectDB(query); 
         try
         {
-            while (tempRs.next())
+            while (resultSet.next())
             {
-                immoNr = tempRs.getString("Count(*)");
+                immoNr = resultSet.getString("Count(*)");
             }
         }
         catch(SQLException se)
@@ -71,31 +128,66 @@ public class Immo_db
         closeDB();
         return immoNr;
     }
-    public String[] getEigentuemer()
+    /**
+     * Ermitteln Anzahl der Eigentümer in der Datenbank, um beim Speichern
+     * eines neuen Eigentümers die Folge-ID anzeigen zu lassen.
+     * @return eigentuemerNr String Anzahl der Eigentümer
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    public String getNewEigentuemerNummer()
     {
-        int anzahl = 0;
-        String query = "SELECT Count(*) FROM eigentümer";
+        String eigentuemerNr = "";
+        String query = "SELECT Count(*) AS anzahl FROM eigentuemer";
         openDB();
-        ResultSet tempRs = selectDB(query); 
+        resultSet = selectDB(query); 
         try
         {
-            while (tempRs.next())
+            while (resultSet.next())
             {
-                anzahl = tempRs.getInt("Count(*)");
+                eigentuemerNr = resultSet.getString("anzahl");
             }
         }
         catch(SQLException se)
         {
         }     
-        String[] eigentuemer = new String[(anzahl)+1];
-        query = "SELECT Nachname AS bez FROM eigentümer";
-        tempRs = selectDB(query); 
+        closeDB();
+        return eigentuemerNr;
+    }    
+    /**
+     * Vorhandene Eigentümer auslesen für Auswahlfelder
+     * @return eigentuemer String[] mit allen Eigentümern
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    public String[] getEigentuemer()
+    {
+        int anzahl = 0;
+        String query = "SELECT Count(*) FROM eigentuemer";
+        openDB();
+        ResultSet resultSet = selectDB(query); 
         try
         {
-            int zaehler = 0;
-            while (tempRs.next())
+            while (resultSet.next())
             {
-                eigentuemer[zaehler] = tempRs.getString("bez");
+                anzahl = resultSet.getInt("Count(*)");
+            }
+        }
+        catch(SQLException se)
+        {
+        }     
+        String[] eigentuemer = new String[(anzahl)+2];
+//        query = "SELECT Nachname AS bez FROM eigentuemer";
+        query = "SELECT CONCAT (nachname,' ',vorname) AS bez FROM eigentuemer";
+//        SELECT CONCAT(LEFT(firstname, 1), LEFT(lastname, 2))  FROM users;
+        eigentuemer[0] = "Bitte wählen...";
+        resultSet = selectDB(query); 
+        try
+        {
+            int zaehler = 1;
+            while (resultSet.next())
+            {
+                eigentuemer[zaehler] = resultSet.getString("bez");
                 zaehler++;
             }
             eigentuemer[zaehler] = "Neue Auswahl hinzufügen";
@@ -109,7 +201,7 @@ public class Immo_db
     /**
      * Auslesen der bezeichnungen
      * @return bezeichnungen String[]
-     * @param tabelle String mit Tabellenname (wohnlage, heizung, küchen, bad)
+     * @param tabelle String mit Tabellenname (wohnlage, heizung, küchen, bad, anrede, titel)
      * @author Markus Badzura
      * @since 1.0.001
      */
@@ -118,26 +210,27 @@ public class Immo_db
         int anzahl = 0;
         String query = "SELECT Count(*) FROM "+tabelle;
         openDB();
-        ResultSet tempRs = selectDB(query); 
+        resultSet = selectDB(query); 
         try
         {
-            while (tempRs.next())
+            while (resultSet.next())
             {
-                anzahl = tempRs.getInt("Count(*)");
+                anzahl = resultSet.getInt("Count(*)");
             }
         }
         catch(SQLException se)
         {
         }     
-        String[] bezeichnungen = new String[(anzahl)+1];
+        String[] bezeichnungen = new String[(anzahl)+2];
+        bezeichnungen[0] = "Bitte wählen ...";
         query = "SELECT "+tabelle+"bezeichnung AS bez FROM "+tabelle;
-        tempRs = selectDB(query); 
+        resultSet = selectDB(query); 
         try
         {
-            int zaehler = 0;
-            while (tempRs.next())
+            int zaehler = 1;
+            while (resultSet.next())
             {
-                bezeichnungen[zaehler] = tempRs.getString("bez");
+                bezeichnungen[zaehler] = resultSet.getString("bez");
                 zaehler++;
             }
             bezeichnungen[zaehler] = "Neue Auswahl hinzufügen";
@@ -200,9 +293,28 @@ public class Immo_db
         }
         catch(SQLException e)
         {
-            JOptionPane.showMessageDialog(null,"Datenbankanfrage kann nicht verarbeitet werden.",
-                    "Datenbankfehler",JOptionPane.OK_OPTION);            
+//            JOptionPane.showMessageDialog(null,"Datenbankanfrage kann nicht verarbeitet werden.",
+//                    "Datenbankfehler",JOptionPane.OK_OPTION);            
         }
         return resultSet;
+    }    
+    /**
+     * Insert-Anweisung ausführen
+     * @param query Insert-Anweisung
+     * @author Markus Badzura
+     * @version 1.0.001
+     */
+    private void insertDB(String query)
+    {
+        try
+        {
+            statement = connection.createStatement();
+            statement.execute(query);
+        }
+        catch(SQLException e)
+        {
+            JOptionPane.showMessageDialog(null,"Speicherung konnte nicht durchgeführt werden.",
+                    "Datenbankfehler",JOptionPane.OK_OPTION); 
+        }
     }    
 }

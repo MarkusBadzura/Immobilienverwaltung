@@ -17,6 +17,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.time.LocalDate;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -28,6 +29,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -82,14 +84,33 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     //                                                                       //
     // Deklaration Ansicht Neue Immobilie                                    //
     //                                                                       //
-    ///////////////////////////////////////////////////////////////////////////    
-    private JPanel jp_immobilie, jp_wohnungen;   
+    ///////////////////////////////////////////////////////////////////////////       
     private JTabbedPane jtp_immobilie;
+    ///////////////////////////////////////////////////////////////////////////
+    //                                                                       //
+    // Deklaration Tab Neue Immobilie                                        //
+    //                                                                       //
+    ///////////////////////////////////////////////////////////////////////////    
+    private JPanel jp_immobilie;   
     private JTextField jtf_immoNr, jtf_immoStr, jtf_immoPlz, jtf_immoOrt;
     private JComboBox jcb_immoWohnlage, jcb_immoEigentuemer;
     private JLabel jl_immoNr, jl_immoStr, jl_immoPlz, jl_immoOrt, jl_immoUeber,
             jl_immoWohnlage, jl_immoEigentuemer;
     private JButton jb_immoNeu,jb_sneSave;
+    ///////////////////////////////////////////////////////////////////////////
+    //                                                                       //
+    // Deklaration Tab Neue Wohnung                                          //
+    //                                                                       //
+    ///////////////////////////////////////////////////////////////////////////    
+    private JPanel jp_wohnungen;
+    private JLabel jl_whgImmoNummer, jl_whgImmoStrasse, jl_whgImmoPlz,
+            jl_whgImmoOrt, jl_whgId, jl_whgMieter, jl_whgQm, jl_whgZimmer,
+            jl_whgKuechenid, jl_whgHeizungid, jl_whgBadid, jl_whgZusatz,
+            jl_whgKaltmiete, jl_whgNebenkosten;
+    private JComboBox jcb_whgMieter, jcb_whgKueche, jcb_whgHeizung, jcb_whgBad;
+    private JTextPane jtp_whgUebersicht;
+    private JTextField jtf_whgId, jtf_whgQm, jtf_whgZimmer, jtf_whgZusatz, 
+            jtf_whgKaltmiete, jtf_whgNebenkosten;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Dialogfenster Programminformationen                       //
@@ -99,7 +120,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     JLabel jl_saTitel, jl_saAnlass, jl_saAuthor;  
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
-    // Deklaration Dialogfenster Programminformationen                       //
+    // Deklaration Dialogfenster Neuer Eigentümer                            //
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////  
     JDialog showNewEigentuemer;
@@ -110,6 +131,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     JTextField jtf_sneEigentuemerId, jtf_sneNachname, jtf_sneVorname, jtf_sneStrasse,
             jtf_snePlz, jtf_sneOrt, jtf_sneGeburtstag, jtf_sneTelefon, jtf_sneEmail;    
     JComboBox jcb_sneTitel, jcb_sneAnrede;
+    LocalDate gebtag;
     /**
      * Setzen des Anwendungsfensters
      * @author Markus Badzura
@@ -167,14 +189,14 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
      * @author Markus Badzura
      * @since 1.0.001
      */
-    private void exitDialog()
+    private void exitDialog(JDialog name)
     {
-        int result = JOptionPane.showConfirmDialog(null, "Möchten Sie wirklich beenden?",
-                "Programm beenden", JOptionPane.YES_NO_OPTION);
+        int result = JOptionPane.showConfirmDialog(null, "Möchten Sie die Eingabe wirklich ohne Speichern beenden?",
+                "Dialog beenden", JOptionPane.YES_NO_OPTION);
         switch (result)
         {
             case JOptionPane.YES_OPTION:
-                this.dispose();
+                name.dispose();
         }
     }        
     /**
@@ -247,7 +269,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jmi_immo_mieteruebersicht = new JMenuItem("Mieterübersicht anzeigen",'M');
         jmi_immo_mieteruebersicht.addActionListener(this);
         jmi_immo_mieteruebersicht.setAccelerator(KeyStroke.getKeyStroke("F3"));
-        jmi_immo_uebersicht = new JMenuItem("Immobileienübersicht",'I');
+        jmi_immo_uebersicht = new JMenuItem("Immobilienübersicht",'I');
         jmi_immo_uebersicht.addActionListener(this);
         jmi_immo_uebersicht.setAccelerator(KeyStroke.getKeyStroke("F4"));
         jmi_immo_neu = new JMenuItem("Neue Immobilie",'N');
@@ -313,6 +335,11 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     {
         h.setHilfe("Immobilienverwaltung",URLICON,"xml/help.xml");        
     }
+    /**
+     * Befüllen des Auswahlfeldes Eigentümer
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
     private void fillEigentuemer()
     {
         String[] eigentuemer = database.getEigentuemer();
@@ -320,13 +347,58 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             jcb_immoEigentuemer.addItem(eigentuemer[i]);
         }
+        jcb_immoEigentuemer.addItemListener(this);
     }
+    /**
+     * Befüllen des Auswahlfeldes Wohnlage
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
     private void fillWohnlage()
     {
         String[] wohnlage = database.getBezeichnungen("wohnlage");
         for (int i = 0; i<wohnlage.length;i++)
         {
             jcb_immoWohnlage.addItem(wohnlage[i]);
+        }
+    }
+    /**
+     * Befüllen des Auswahlfeldes Küche
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillKueche()
+    {
+        String[] kueche = database.getBezeichnungen("kuechen");
+        for (int i = 0; i<kueche.length;i++)
+        {
+            jcb_whgKueche.addItem(kueche[i]);
+        }
+    }
+    /**
+     * Befüllen des Auswahlfeldes Heizung
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillHeizung()
+    {
+        String[] heizung = database.getBezeichnungen("heizung");
+        for (int i = 0; i<heizung.length;i++)
+        {
+            jcb_whgHeizung.addItem(heizung[i]);
+        }
+    }
+    /**
+     * Befüllen des Auswahlfeldes Bad
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillBad()
+    {
+        String[] bad = database.getBezeichnungen("bad");
+        for (int i = 0; i<bad.length;i++)
+        {
+            jcb_whgBad.addItem(bad[i]);
         }
     }
     /**
@@ -342,19 +414,61 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jtf_immoNr.setText(String.valueOf(newImmoNummer));
     }
     /**
-     * Fensteransicht für das Anlegen einer neuen Immobilie
+     * Setzen der neuen Eigentümer-Id in das Textfeld. Die Anzahl der Eigentümer
+     * wird in einer Datenbankabfrage ermittelt und um 1 inkrementiert.
      * @author Markus Badzura
      * @since 1.0.001
      */
-    private void setImmoNew()
+    private void setNewEigentuemerId()
     {
-        jtp_immobilie = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-        jtp_immobilie.setSize(this.getSize());
-        ///////////////////////////////////////////////////////////////////////////
-        //                                                                       //
-        // JPanel Tab Neue Immobilie                                             //
-        //                                                                       //
-        ///////////////////////////////////////////////////////////////////////////
+        int newEigentuemerNummer = Integer.parseInt(database.getNewEigentuemerNummer())+1;
+        jtf_sneEigentuemerId.setText(String.valueOf(newEigentuemerNummer));
+    }
+    /**
+     * Befüllen des Auswahlfeldes Titel
+     * @param feld JComboBox welche mit dem Datenbankinhalt aus der Tabelle titel befüllt wird
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setTitel(JComboBox feld)
+    {
+        String[] inhalt = database.getBezeichnungen("titel");
+        for (int i = 0;i<inhalt.length;i++)
+        {
+            feld.addItem(inhalt[i]);
+        }
+    }
+    /**
+     * Befüllen des Auswahlfeldes Anrede
+     * @param feld JComboBox welche mit dem Datenbankinhalt aus der Tabelle anrede befüllt wird
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setAnrede(JComboBox feld)
+    {
+        String[] inhalt = database.getBezeichnungen("anrede");
+        for (int i = 0;i<inhalt.length; i++)
+        {
+            feld.addItem(inhalt[i]);
+        }
+    }
+    /**
+     * Panel für Tab Neue Wohnung
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setTabNewWohnung()
+    {
+        jp_wohnungen = new JPanel();
+        jp_wohnungen.setSize(this.getSize());        
+    }
+    /**
+     * Panel für Tab Neue Immobilie
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setTabNewImmobilie()
+    {
         int jlb = SCREENSIZE.width/3;
         int jlh = 25;
         int spx = jlb+20;
@@ -405,7 +519,6 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jcb_immoEigentuemer = new JComboBox();
         jcb_immoEigentuemer.setFont(jcb_immoEigentuemer.getFont().deriveFont(14f));
         jcb_immoEigentuemer.setBounds(spx,270,jlb,jlh);    
-        jcb_immoEigentuemer.addItemListener(this);
         fillEigentuemer();   
         jb_immoNeu = new JButton("Immobilie anlegen");
         jb_immoNeu.setBounds(spx,350,jlb,jlh);
@@ -423,14 +536,19 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jp_immobilie.add(jtf_immoOrt);
         jp_immobilie.add(jcb_immoWohnlage);
         jp_immobilie.add(jcb_immoEigentuemer);
-        jp_immobilie.add(jb_immoNeu);
-        ///////////////////////////////////////////////////////////////////////////
-        //                                                                       //
-        // JPanel Tab Neue Wohnungen                                             //
-        //                                                                       //
-        ///////////////////////////////////////////////////////////////////////////            
-        jp_wohnungen = new JPanel();
-        jp_wohnungen.setSize(this.getSize());
+        jp_immobilie.add(jb_immoNeu);        
+    }
+    /**
+     * Fensteransicht für das Anlegen einer neuen Immobilie
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setImmoNew()
+    {
+        jtp_immobilie = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+        jtp_immobilie.setSize(this.getSize());
+        setTabNewImmobilie();
+        setTabNewWohnung();       
         jtp_immobilie.add("Neue Immobilie",jp_immobilie);
         jtp_immobilie.add("Wohnungen der Immobilie",jp_wohnungen);  
         jtp_immobilie.setEnabledAt(1, false);
@@ -439,41 +557,194 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         this.setVisible(true);
     }
     /**
+     * Prüfung, ob alle Pflichtfelder ausgefüllt sind und ob die Konventionen
+     * eingehalten wurden. Wenn alles korrekt eingegeben ist, wird ein neuer
+     * Eigentümer in die Datenbank gespeichert.
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    @SuppressWarnings("UnusedAssignment")
+    private void pruefeNewEigentuemer()
+    {
+        String fehler = "";
+        String sneNachname = jtf_sneNachname.getText().trim();
+        String sneVorname = jtf_sneVorname.getText().trim();
+        String sneStrasse = jtf_sneStrasse.getText().trim();
+        String snePlz = jtf_snePlz.getText().trim();
+        String sneOrt = jtf_sneOrt.getText().trim();
+        String sneGeburtstag = jtf_sneGeburtstag.getText().trim();
+        String sneTelefon = jtf_sneTelefon.getText().trim();
+        String sneEmail = jtf_sneEmail.getText().trim();
+        int sneTitel = jcb_sneTitel.getSelectedIndex();
+        int sneAnrede = jcb_sneAnrede.getSelectedIndex();
+        if (sneAnrede == 0)
+        {
+            fehler = fehler + "Sie müssen eine Anrede auswählen";
+            jcb_sneAnrede.requestFocus();
+        }        
+        if ("".equals(sneNachname.trim())) 
+        {
+            fehler = fehler + "Sie haben keinen Nachnamen eingetragen.\n";
+            jtf_sneNachname.requestFocus();
+        }
+        if ("".equals(sneVorname))
+        {
+            fehler = fehler + "Sie haben keinen Vornamen eingetragen.\n";
+            jtf_sneVorname.requestFocus();
+        }
+        if ("".equals(sneStrasse))
+        {
+            fehler = fehler + "Sie haben die Strasse nicht eingetragen.\n";
+            jtf_sneStrasse.requestFocus();
+        }
+        if ("".equals(snePlz))
+        {
+            fehler = fehler + "Sie haben keine Postleitzahl eingetragen.\n";
+            jtf_snePlz.requestFocus();
+        }
+        else
+        {
+            if (snePlz.length() != 5)
+            {
+                fehler = fehler + "Die Postleitzahl muss 5-stellig sein.\n";
+                jtf_snePlz.requestFocus();
+            }
+            else
+            {
+                if (!snePlz.matches("[0-9]{5}"))
+                {
+                    fehler = fehler + "Die Postleitzahl besteht nur aus Ziffern.\n";
+                    jtf_snePlz.requestFocus();
+                }
+            }
+        }
+        if ("".equals(sneOrt))
+        {
+            fehler = fehler + "Sie haben keinen Ort eingegeben.\n";
+            jtf_sneOrt.requestFocus();
+        }
+        if (!"".equals(sneGeburtstag))
+        {
+            try
+            {
+                int jahr = Integer.parseInt(sneGeburtstag.substring(6));
+                int monat = Integer.parseInt(sneGeburtstag.substring(3,5));
+                int tag = Integer.parseInt(sneGeburtstag.substring(0,2));
+                gebtag = LocalDate.of(jahr,monat,tag);
+            }
+            catch(NumberFormatException e)
+            {
+                fehler = fehler + "Geben Sie das Geburtsdatum im Format tt.mm.jjjj ein.\n";
+                jtf_sneGeburtstag.requestFocus();
+            }
+        }
+        if (!"".equals(sneEmail))
+        {
+            if(!sneEmail.matches("[\\w|.|-]+@\\w[\\w|-]*\\.[a-z]{2,4}"))
+            {
+                fehler = fehler + "Geben Sie eine gültige eMail-Adresse ein.\n";
+                jtf_sneEmail.requestFocus();
+            }
+        }
+        if ("".equals(sneTelefon))
+        {
+            fehler = fehler + "Sie haben keine Telefonnummer eingegeben.\n";
+            jtf_sneTelefon.requestFocus();
+        }
+        else
+        {
+            if(sneTelefon.length()>20)
+            {
+                fehler = fehler + "Die Telefonnummer ist zu lang.\n";
+                jtf_sneTelefon.requestFocus();
+            }
+            else
+            {
+                if (!sneTelefon.matches("[0-9/. \\-]+"))
+                {
+                    fehler = fehler + "Die Telefonnummer darf nur aus Ziffern, . / und - bestehen.\n";
+                    jtf_sneTelefon.requestFocus();
+                }
+            }
+        }
+        if (!"".equals(fehler))
+        {
+            showNewEigentuemer.setModal(false);
+            JOptionPane.showMessageDialog(null, fehler,
+                "Fehlende Eingaben", JOptionPane.OK_OPTION);  
+            showNewEigentuemer.setModal(true);
+        }
+        else
+        {
+            String gebTag;
+            try
+            {
+                gebTag = gebtag.toString();
+            }
+            catch(NullPointerException e)
+            {
+                gebTag = "0000-00-00";
+            }
+            database.saveNewEigentuemer(sneTitel, sneAnrede, sneNachname, sneVorname, sneStrasse, snePlz, sneOrt, gebTag, sneTelefon, sneEmail);
+            showNewEigentuemer.dispose();
+            jcb_immoEigentuemer.removeItemListener(this);
+            jcb_immoEigentuemer.removeAllItems();
+            fillEigentuemer();
+            
+        }
+    }
+    /**
      * Prüfung ob die Daten bei Neueingabe Immobilie logisch vorhanden sind
      * Eingabefelder auf Inhalt prüfen, ComboBox für erstmaligen Eintrag prüfen
      * @author Markus Badzura
      * @since 1.0.001
      */
-    private void pruefeEintrag()
+    private void pruefeNewImmobilie()
     {
-        boolean ok = true;
         String fehler = "";
         if ("".equals(jtf_immoStr.getText().trim()))
         {
-            ok=false;
             fehler = fehler + "Straße der Immobilie ist nicht eingetragen.\n";
             jtf_immoStr.requestFocus();
         }
         if ("".equals(jtf_immoPlz.getText().trim()))
         {
-            ok = false;
-            fehler = fehler + "Postleitzahl ist nicht eingetragen.\n";
+            fehler = fehler + "Sie haben keine Postleitzahl eingetragen.\n";
             jtf_immoPlz.requestFocus();
+        }
+        else
+        {
+            if (jtf_immoPlz.getText().trim().length() != 5)
+            {
+                fehler = fehler + "Die Postleitzahl muss 5-stellig sein.\n";
+                jtf_immoPlz.requestFocus();
+            }
+            else
+            {
+                if (!jtf_immoPlz.getText().trim().matches("[0-9]{5}"))
+                {
+                    fehler = fehler + "Die Postleitzahl besteht nur aus Ziffern.\n";
+                    jtf_immoPlz.requestFocus();
+                }
+            }
         }
         if ("".equals(jtf_immoOrt.getText().trim()))
         {
-            ok = false;
             fehler = fehler + "Ort ist nicht eingetragen.\n";
             jtf_immoOrt.requestFocus();
         }
-        if ("Neue Auswahl hinzufügen".equals(jcb_immoEigentuemer.getSelectedItem().toString()))
+        if (jcb_immoEigentuemer.getSelectedIndex()== 0);
         {
-            ok = false;
             fehler = fehler + "Eigentümer wurde noch nicht hinzugefügt.";
         }
-        if (ok)
+        if ("".equals(fehler))
         {
-            System.out.println("Daten speichern");
+            database.saveNewImmobilie(jcb_immoWohnlage.getSelectedIndex(), 
+                    jcb_immoEigentuemer.getSelectedIndex(), jtf_immoStr.getText().trim(),
+                    jtf_immoPlz.getText().trim(), jtf_immoOrt.getText().trim());
+            jtp_immobilie.setEnabledAt(1, true);
+            jtp_immobilie.setSelectedIndex(1);
+            jtp_immobilie.setEnabledAt(0, false);
         }
         else
         {
@@ -523,8 +794,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     {
         showNewEigentuemer = new JDialog();
         showNewEigentuemer.setTitle("Programminformationen");
-        showNewEigentuemer.setSize(400,450);
-        showNewEigentuemer.setModal(true);
+        showNewEigentuemer.setSize(400,450);    
         showNewEigentuemer.setLocation(SCREENSIZE.width/2-150,SCREENSIZE.height/2-100);
         showNewEigentuemer.setIconImage(ICON.getImage());
         showNewEigentuemer.setLayout(null);
@@ -534,7 +804,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             @Override
             public void windowClosing(WindowEvent e)
             {
-                exitDialog();
+                exitDialog(showNewEigentuemer);
             }
         });    
         int breite = 175;
@@ -546,107 +816,102 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jl_sneTitel = new JLabel("Titel: ",JLabel.RIGHT);
         jl_sneTitel.setFont(jl_sneTitel.getFont().deriveFont(14f));
         jl_sneTitel.setBounds(10,40,breite,hoehe);
-        showNewEigentuemer.add(jl_sneTitel);
         jl_sneAnrede = new JLabel("Anrede: ",JLabel.RIGHT);
         jl_sneAnrede.setFont(jl_sneAnrede.getFont().deriveFont(14f));
         jl_sneAnrede.setBounds(10,70,breite,hoehe);
-        showNewEigentuemer.add(jl_sneAnrede);
         jl_sneNachname = new JLabel("Nachname: ",JLabel.RIGHT);
         jl_sneNachname.setFont(jl_sneNachname.getFont().deriveFont(14f));
         jl_sneNachname.setBounds(10,100,breite,hoehe);
-        showNewEigentuemer.add(jl_sneNachname);
         jl_sneVorname = new JLabel("Vorname: ",JLabel.RIGHT);
         jl_sneVorname.setFont(jl_sneVorname.getFont().deriveFont(14f));
         jl_sneVorname.setBounds(10,130,breite,hoehe);
-        showNewEigentuemer.add(jl_sneVorname);
         jl_sneStrasse = new JLabel("Straße: ",JLabel.RIGHT);
         jl_sneStrasse.setFont(jl_sneStrasse.getFont().deriveFont(14f));
         jl_sneStrasse.setBounds(10,160,breite,hoehe);
-        showNewEigentuemer.add(jl_sneStrasse);
         jl_snePlz = new JLabel("PLZ: ",JLabel.RIGHT);
         jl_snePlz.setFont(jl_snePlz.getFont().deriveFont(14f));
         jl_snePlz.setBounds(10,190,breite,hoehe);
-        showNewEigentuemer.add(jl_snePlz);
         jl_sneOrt = new JLabel("Ort: ",JLabel.RIGHT);
         jl_sneOrt.setFont(jl_sneOrt.getFont().deriveFont(14f));
         jl_sneOrt.setBounds(10,220,breite,hoehe);
-        showNewEigentuemer.add(jl_sneOrt);
         jl_sneGeburtstag = new JLabel("Geburtstag: ",JLabel.RIGHT);
         jl_sneGeburtstag.setFont(jl_sneGeburtstag.getFont().deriveFont(14f));
         jl_sneGeburtstag.setBounds(10,250,breite,hoehe);
-        showNewEigentuemer.add(jl_sneGeburtstag);
         jl_sneTelefon = new JLabel("Telefon: ",JLabel.RIGHT);
         jl_sneTelefon.setFont(jl_sneTelefon.getFont().deriveFont(14f));
         jl_sneTelefon.setBounds(10,280,breite,hoehe);
-        showNewEigentuemer.add(jl_sneTelefon);
         jl_sneEmail = new JLabel("E-Mail-Adresse: ",JLabel.RIGHT);
         jl_sneEmail.setFont(jl_sneEmail.getFont().deriveFont(14f));
         jl_sneEmail.setBounds(10,310,breite,hoehe);
-        showNewEigentuemer.add(jl_sneEmail);
         jb_sneClear = new JButton("abbrechen");
         jb_sneClear.setBounds(10,350,breite,hoehe);
         jb_sneClear.addActionListener(this);
-        showNewEigentuemer.add(jb_sneClear);
         jtf_sneEigentuemerId = new JTextField();
         jtf_sneEigentuemerId.setFont(jtf_sneEigentuemerId.getFont().deriveFont(14f));
         jtf_sneEigentuemerId.setEditable(false);
         jtf_sneEigentuemerId.setBounds(posx,10,breite,hoehe);
-
+        setNewEigentuemerId();
         jcb_sneTitel = new JComboBox();
         jcb_sneTitel.setFont(jcb_sneTitel.getFont().deriveFont(14f));
         jcb_sneTitel.setBounds(posx,40,breite,hoehe);
-
+        setTitel(jcb_sneTitel);
         jcb_sneAnrede = new JComboBox();
         jcb_sneAnrede.setFont(jcb_sneAnrede.getFont().deriveFont(14f));
         jcb_sneAnrede.setBounds(posx,70,breite,hoehe);
-
+        setAnrede(jcb_sneAnrede);
         jtf_sneNachname = new JTextField();
         jtf_sneNachname.setFont(jtf_sneNachname.getFont().deriveFont(14f));
         jtf_sneNachname.setBounds(posx,100,breite,hoehe);
-
         jtf_sneVorname = new JTextField();
         jtf_sneVorname.setFont(jtf_sneVorname.getFont().deriveFont(14f));
-        jtf_sneVorname.setBounds(posx,130,breite,hoehe);
-      
+        jtf_sneVorname.setBounds(posx,130,breite,hoehe);    
         jtf_sneStrasse = new JTextField();
         jtf_sneStrasse.setFont(jtf_sneStrasse.getFont().deriveFont(14f));
         jtf_sneStrasse.setBounds(posx,160,breite,hoehe);
-
         jtf_snePlz = new JTextField();
         jtf_snePlz.setFont(jtf_snePlz.getFont().deriveFont(14f));
         jtf_snePlz.setBounds(posx,190,breite,hoehe);
-
         jtf_sneOrt = new JTextField();
         jtf_sneOrt.setFont(jtf_sneOrt.getFont().deriveFont(14f));
         jtf_sneOrt.setBounds(posx,220,breite,hoehe);
-
         jtf_sneGeburtstag = new JTextField();
         jtf_sneGeburtstag.setFont(jtf_sneGeburtstag.getFont().deriveFont(14f));
         jtf_sneGeburtstag.setBounds(posx,250,breite,hoehe);
-
+        jtf_sneGeburtstag.setToolTipText("Format: tt.mm.jjjj");
         jtf_sneTelefon = new JTextField();
         jtf_sneTelefon.setFont(jtf_sneTelefon.getFont().deriveFont(14f));
         jtf_sneTelefon.setBounds(posx,280,breite,hoehe);
-
         jtf_sneEmail = new JTextField();
         jtf_sneEmail.setFont(jtf_sneEmail.getFont().deriveFont(14f));
         jtf_sneEmail.setBounds(posx,310,breite,hoehe);
         jb_sneSave = new JButton("Speichern");
         jb_sneSave.setBounds(posx,350,breite,hoehe);
         jb_sneSave.addActionListener(this);
-                showNewEigentuemer.add(jtf_sneEigentuemerId);
-                showNewEigentuemer.add(jcb_sneTitel);
-                showNewEigentuemer.add(jcb_sneAnrede);
-                showNewEigentuemer.add(jtf_sneNachname);
-                showNewEigentuemer.add(jtf_sneVorname);
-                showNewEigentuemer.add(jtf_sneStrasse);  
-                showNewEigentuemer.add(jtf_snePlz);
-                showNewEigentuemer.add(jtf_sneOrt);
-                showNewEigentuemer.add(jtf_sneGeburtstag);
-                showNewEigentuemer.add(jtf_sneTelefon);
+        showNewEigentuemer.add(jl_sneTitel);
+        showNewEigentuemer.add(jl_sneAnrede);
+        showNewEigentuemer.add(jl_sneNachname);
+        showNewEigentuemer.add(jl_sneVorname);
+        showNewEigentuemer.add(jl_sneStrasse);
+        showNewEigentuemer.add(jl_snePlz);
+        showNewEigentuemer.add(jl_sneOrt);
+        showNewEigentuemer.add(jl_sneGeburtstag);
+        showNewEigentuemer.add(jl_sneTelefon);
+        showNewEigentuemer.add(jl_sneEmail);
+        showNewEigentuemer.add(jb_sneClear);
+        showNewEigentuemer.add(jtf_sneEigentuemerId);
+        showNewEigentuemer.add(jcb_sneTitel);
+        showNewEigentuemer.add(jcb_sneAnrede);
+        showNewEigentuemer.add(jtf_sneNachname);
+        showNewEigentuemer.add(jtf_sneVorname);
+        showNewEigentuemer.add(jtf_sneStrasse);  
+        showNewEigentuemer.add(jtf_snePlz);
+        showNewEigentuemer.add(jtf_sneOrt);
+        showNewEigentuemer.add(jtf_sneGeburtstag);
+        showNewEigentuemer.add(jtf_sneTelefon);
         showNewEigentuemer.add(jtf_sneEmail);
         showNewEigentuemer.add(jl_sneEigentuemerId);        
         showNewEigentuemer.add(jb_sneSave);  
+        showNewEigentuemer.setModal(true);
         showNewEigentuemer.setVisible(true);
     }
     /**
@@ -786,7 +1051,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         // Button Neue Immobilie anlegen
         if (e.getSource() == jb_immoNeu)
         {
-            pruefeEintrag();
+            pruefeNewImmobilie();
         }
         // Button showNewEigentümer Abbrechen
         if (e.getSource() == jb_sneClear)
@@ -796,7 +1061,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         // Button showNewEigentümer Speichern
         if (e.getSource() == jb_sneSave)
         {
-            notImplemented();
+            pruefeNewEigentuemer();
         }
     }
     /**
@@ -878,7 +1143,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     @Override
     public void keyReleased(KeyEvent e) {}
     /**
-     * Programmmitteilung, dass Bestandteil noch nicht implmentiert ist
+     * Programmmitteilung, dass Bestandteil noch nicht implementiert ist
      * @author Markus Badzura
      * @since 1.0.001
      */
@@ -896,6 +1161,8 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             if("Neue Auswahl hinzufügen".equals(jcb_immoEigentuemer.getSelectedItem().toString()))
             {
+                jcb_immoEigentuemer.setSelectedIndex(0);
+                
                 showNewEigentuemer();
             }
         }
