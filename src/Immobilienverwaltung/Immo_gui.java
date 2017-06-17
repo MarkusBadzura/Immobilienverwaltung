@@ -101,7 +101,6 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             jl_immoWohnlage, jl_immoEigentuemer;
     private JButton jb_immoNeu;
     private int aktuelleImmo;
-    private String whgStrasse, whgPlz, whgOrt;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Tab Neue Wohnung                                          //
@@ -141,7 +140,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     LocalDate ld_sneGebtag;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
-    // Deklaration Dialogfenster Neuer Mieter                          //
+    // Deklaration Dialogfenster Neuer Mieter                                //
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////  
     JDialog showNewMieter;
@@ -153,7 +152,17 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             jtf_snmPlz, jtf_snmOrt, jtf_snmGeburtstag, jtf_snmTelefon, jtf_snmEmail,
             jtf_snmMieterSeid;    
     JComboBox jcb_snmTitel, jcb_snmAnrede;
-    LocalDate ld_snmGebtag, ld_snmMieterSeid;    
+    LocalDate ld_snmGebtag, ld_snmMieterSeid;  
+    ///////////////////////////////////////////////////////////////////////////
+    //                                                                       //
+    // Deklaration Dialogfenster Neue Ausstattung                            //
+    //                                                                       //
+    ///////////////////////////////////////////////////////////////////////////     
+    JDialog showNewAusstattung;
+    JLabel jl_snaAusstattung;
+    JTextField jtf_snaAusstattung;
+    JButton jb_snaClear;
+    JButton jb_snaSave;
     /**
      * Setzen des Anwendungsfensters
      * @author Markus Badzura
@@ -383,6 +392,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             jcb_immoWohnlage.addItem(wohnlage[i]);
         }
+        jcb_immoWohnlage.addItemListener(this);
     }
     /**
      * Befüllen des Auswahlfeldes Küche
@@ -396,6 +406,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             jcb_whgKueche.addItem(kueche[i]);
         }
+        jcb_whgKueche.addItemListener(this);
     }
     /**
      * Befüllen des Auswahlfeldes Heizung
@@ -409,6 +420,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             jcb_whgHeizung.addItem(heizung[i]);
         }
+        jcb_whgHeizung.addItemListener(this);        
     }
     /**
      * Befüllen des Auswahlfeldes Bad
@@ -422,6 +434,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             jcb_whgBad.addItem(bad[i]);
         }
+        jcb_whgBad.addItemListener(this);
     }
     /**
      * Befüllen des Auswahlfeldes Mieter
@@ -436,7 +449,6 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             jcb_whgMieter.addItem(mieter[i]);
         }
         jcb_whgMieter.addItemListener(this);
-        jcb_whgMieter.repaint();
     }
     /**
      * Erstinitialisierung Übersicht aktuelle Immobilie bei Neuer Wohnung
@@ -446,7 +458,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     private void fillWhgUebersicht()
     {
         al_wohnungen = database.getWohnungsUebersicht(aktuelleImmo);
-        Immo_wohnungen iwTemp = new Immo_wohnungen();
+        Immo_wohnungen iwTemp;
         String whgUebersicht = 
                 "<html>"
                 + "<table>"
@@ -601,7 +613,6 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         fillMieter();
         jcb_whgMieter.setFont(jcb_whgMieter.getFont().deriveFont(14f));
         jcb_whgMieter.setBounds(x2,80,breite,hoehe);
-        jcb_whgMieter.addItemListener(this);
         jtf_whgQm = new JTextField();
         jtf_whgQm.setFont(jtf_whgQm.getFont().deriveFont(14f));
         jtf_whgQm.setBounds(x2,110,breite,hoehe);
@@ -903,12 +914,58 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             database.saveNewMieter(snmTitel, snmAnrede, snmNachname,
                     snmVorname, snmStrasse, snmPlz, snmOrt, gebTag,
                     mieterSeid, snmTelefon, snmEmail);
-            showNewMieter.setModal(false);
             showNewMieter.dispose();
             jcb_whgMieter.removeItemListener(this);
-            jcb_whgMieter.removeAll();
+            jcb_whgMieter.removeAllItems();
             fillMieter();      
         }        
+    }
+    /** 
+     * logische Überprüfung des eingegebenen Wertes auf Datenbankkon-
+     * sitzens, Richtigkeit und Vollständigkeit der Eintragung
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void pruefeAusstattung()
+    {
+      if ("".equals(jtf_snaAusstattung.getText().trim()))
+      {
+        showNewAusstattung.setModal(false);
+        JOptionPane.showMessageDialog(null, "Sie haben kein"
+                + "Ausstattungsmerkmal eingetragen.",
+                "Fehlende Eingaben", JOptionPane.OK_OPTION);  
+        showNewAusstattung.setModal(true); 
+        jtf_snaAusstattung.requestFocus();
+      }
+      else
+      {
+        String table = jb_snaSave.getText().trim().toLowerCase().
+                        substring(22);
+        database.setAusstattung(jtf_snaAusstattung.getText().trim()
+                ,table);
+        showNewAusstattung.dispose();
+        if ("kuechen".equals(table))
+        {
+          jcb_whgKueche.removeItemListener(this);
+          jcb_whgKueche.removeAllItems();          
+          fillKueche();
+        }
+        else
+        {
+          if ("heizung".equals(table))
+          {
+            jcb_whgHeizung.removeItemListener(this);
+            jcb_whgHeizung.removeAllItems();            
+            fillHeizung();
+          }
+          else
+          {
+            jcb_whgBad.removeItemListener(this);
+            jcb_whgBad.removeAllItems();            
+            fillBad();
+          }
+        }
+      }
     }
     /**
      * logische Überprüfung der eingegebenen Werte auf Datenbankkon-
@@ -1275,6 +1332,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             jtp_immobilie.setEnabledAt(1, true);
             jtp_immobilie.setSelectedIndex(1);
             jtp_immobilie.setEnabledAt(0, false);
+            sleeper();
             jl_whgImmoAnschrift.setText(database.getImmoAnschrift(aktuelleImmo));
         }
         else
@@ -1315,6 +1373,48 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         showAbout.add(jl_saAnlass);
         showAbout.add(jl_saAuthor);        
         showAbout.setVisible(true);        
+    }
+    /**
+     * Dialogfenster zur Eingabe eines neuen Ausstattungmerkmales
+     * @param art String mit kuechen, heizung oder bad
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void showNewAusstattung(String art)
+    {
+        showNewAusstattung = new JDialog();
+        showNewAusstattung.setTitle("Hinzufügen einer Zussatzausstattung Bereich "+art.toUpperCase());
+        showNewAusstattung.setSize(500,200);
+        showNewAusstattung.setLocation(SCREENSIZE.width/2-150,SCREENSIZE.height/2-100);
+        showNewAusstattung.setIconImage(ICON.getImage());
+        showNewAusstattung.setLayout(null);
+        showNewAusstattung.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        showNewAusstattung.addWindowListener(new WindowAdapter() 
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                showNewAusstattung.dispose();
+            }
+        });              
+        jl_snaAusstattung = new JLabel("Neue Ausstattung: ",JLabel.RIGHT);
+        jl_snaAusstattung.setFont(jl_snaAusstattung.getFont().deriveFont(14f));
+        jl_snaAusstattung.setBounds(10,10,200,25);
+        jtf_snaAusstattung = new JTextField();
+        jtf_snaAusstattung.setFont(jtf_snaAusstattung.getFont().deriveFont(14f));
+        jtf_snaAusstattung.setBounds(220,10,200,25);
+        jb_snaClear = new JButton ("Abbrechen");
+        jb_snaClear.addActionListener(this);
+        jb_snaClear.setBounds(10,50,200,25);
+        jb_snaSave = new JButton ("Speichern Ausstattung "+art.toUpperCase());
+        jb_snaSave.addActionListener(this);
+        jb_snaSave.setBounds(220,50,200,25);
+        showNewAusstattung.add(jl_snaAusstattung);
+        showNewAusstattung.add(jtf_snaAusstattung);
+        showNewAusstattung.add(jb_snaClear);
+        showNewAusstattung.add(jb_snaSave);
+        showNewAusstattung.setModal(true);
+        showNewAusstattung.setVisible(true);       
     }
     /**
      * Dialogfenster zur Eingabe eines neuen Mieters
@@ -1466,7 +1566,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     private void showNewEigentuemer()
     {
         showNewEigentuemer = new JDialog();
-        showNewEigentuemer.setTitle("Programminformationen");
+        showNewEigentuemer.setTitle("Neuen Eigentümer anlegen");
         showNewEigentuemer.setSize(400,450);    
         showNewEigentuemer.setLocation(SCREENSIZE.width/2-150,SCREENSIZE.height/2-100);
         showNewEigentuemer.setIconImage(ICON.getImage());
@@ -1586,6 +1686,20 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         showNewEigentuemer.add(jb_sneSave);  
         showNewEigentuemer.setModal(true);
         showNewEigentuemer.setVisible(true);
+    }
+    /**
+     * Thread kurzfristig pausieren, um Folgeaktion vollständig durch-
+     * führen zu können
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void sleeper()
+    {
+      try
+      {
+        Thread.sleep( 150 );
+      }
+      catch(InterruptedException ie){}      
     }
     /**
      * Action-Listener
@@ -1752,10 +1866,21 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             pruefeMieter();
             jcb_whgMieter.setSelectedIndex(0);
         }
+        // Button Neuen Mieter abbrechen
         if (e.getSource() == jb_snmClear)
         {
-            showNewMieter.dispose();
-            jcb_whgMieter.setSelectedIndex(0);
+          showNewMieter.dispose();
+          jcb_whgMieter.setSelectedIndex(0);
+        }
+        // Button Neues Ausstattungsmerkmal abbrechen
+        if (e.getSource() == jb_snaClear)
+        {
+          showNewAusstattung.dispose(); 
+        }
+        // Button Neues Ausstattungsmerkmal speichern
+        if (e.getSource() == jb_snaSave)
+        {
+          pruefeAusstattung();
         }
     }
     /**
@@ -1851,20 +1976,59 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     @Override
     public void itemStateChanged(ItemEvent e) 
     {
+        // Auswahl Eigentümer Neue Immobilie eingeben
         if (e.getSource() == jcb_immoEigentuemer)
         {
-            if("Neue Auswahl hinzufügen".equals(jcb_immoEigentuemer.getSelectedItem().toString()))
+            if("Neue Auswahl hinzufügen".equals(jcb_immoEigentuemer
+                    .getSelectedItem().toString()))
             {
-                jcb_immoEigentuemer.setSelectedIndex(0);            
+                jcb_immoEigentuemer.setSelectedIndex(0); 
+                sleeper();
                 showNewEigentuemer();
             }
         }
+        // Auswahl Mieter neue Wohnung eingeben
         if (e.getSource() == jcb_whgMieter)
         {
-            if("Neue Auswahl hinzufügen".equals(jcb_whgMieter.getSelectedItem().toString()))
+            if("Neue Auswahl hinzufügen".equals(jcb_whgMieter
+                    .getSelectedItem().toString()))
             {
                 jcb_whgMieter.setSelectedIndex(0);
+                sleeper();
                 showNewMieter();
+            }
+        }
+        // Auswahl Küchenausstattungsmerkmal neue Wohnung eingeben
+        if (e.getSource() == jcb_whgKueche)
+        {
+            if("Neue Auswahl hinzufügen".equals(jcb_whgKueche
+                    .getSelectedItem().toString()))
+            {
+                jcb_whgKueche.setSelectedIndex(0);
+                sleeper();
+                showNewAusstattung("kuechen");
+            }
+        }
+        // Auswahl Heizungsausstattungsmerkmal neue Wohnung eingeben
+        if (e.getSource() == jcb_whgHeizung)
+        {
+            if("Neue Auswahl hinzufügen".equals(jcb_whgHeizung
+                    .getSelectedItem().toString()))
+            {
+              jcb_whgHeizung.setSelectedIndex(0);
+              sleeper();
+              showNewAusstattung("heizung");
+            }
+        }
+        // Auswahl Badausstattungsmerkmal neue Wohnung eingeben
+        if (e.getSource() == jcb_whgBad)
+        {
+            if("Neue Auswahl hinzufügen".equals(jcb_whgBad
+                    .getSelectedItem().toString()))
+            {
+              jcb_whgBad.setSelectedIndex(0);
+              sleeper();
+              showNewAusstattung("bad");
             }
         }
     }

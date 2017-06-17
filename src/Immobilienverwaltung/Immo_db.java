@@ -131,6 +131,19 @@ public class Immo_db
         return anschrift;
     }
     /**
+     * Hinzufügen eines neuen Ausstattungsmerkmales
+     * @param ausstattungsbez String Neues Ausstattungsbezeichnung
+     * @param tabelle String Tabelle der neuen Ausstattungsbezeichnung
+     */
+    public void setAusstattung(String ausstattungsbez, String tabelle)
+    {
+        String query = "INSERT INTO "+tabelle+" VALUES (null, '"
+                + ausstattungsbez + "');";
+        openDB();
+        insertDB(query);
+        closeDB();       
+    }
+    /**
      * Ermitteln der eingetragenen Wohnungen einer Immobilie
      * Für jede Wohnung wird ein Wohnungsobjekt erstellt und in 
      * einer ArrayList abgelegt.
