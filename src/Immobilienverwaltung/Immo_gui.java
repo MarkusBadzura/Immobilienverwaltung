@@ -18,6 +18,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -36,6 +37,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import static javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
+import javax.swing.text.html.HTMLEditorKit;
 
 /**
  * PSA-Projekt Immobilienverwaltung
@@ -55,6 +57,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     // Erstellen ImageIcon-Objekt
     private static final ImageIcon ICON = new ImageIcon(URLICON);
     private static final Dimension SCREENSIZE = java.awt.Toolkit.getDefaultToolkit().getScreenSize ();
+    Immo_wohnungen tempIw;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Einbindung Templates Hilfefenster,Logdatei, Config-Reader             //
@@ -96,21 +99,25 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     private JComboBox jcb_immoWohnlage, jcb_immoEigentuemer;
     private JLabel jl_immoNr, jl_immoStr, jl_immoPlz, jl_immoOrt, jl_immoUeber,
             jl_immoWohnlage, jl_immoEigentuemer;
-    private JButton jb_immoNeu,jb_sneSave;
+    private JButton jb_immoNeu;
+    private int aktuelleImmo;
+    private String whgStrasse, whgPlz, whgOrt;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Tab Neue Wohnung                                          //
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////    
     private JPanel jp_wohnungen;
-    private JLabel jl_whgImmoNummer, jl_whgImmoStrasse, jl_whgImmoPlz,
-            jl_whgImmoOrt, jl_whgId, jl_whgMieter, jl_whgQm, jl_whgZimmer,
-            jl_whgKuechenid, jl_whgHeizungid, jl_whgBadid, jl_whgZusatz,
-            jl_whgKaltmiete, jl_whgNebenkosten;
+    private JLabel jl_whgImmoNummer, jl_whgImmoAnschrift, jl_whgId, jl_whgMieter, 
+            jl_whgQm, jl_whgZimmer,jl_whgKuechenid, jl_whgHeizungid, jl_whgBadid, 
+            jl_whgZusatz, jl_whgKaltmiete, jl_whgNebenkosten;
     private JComboBox jcb_whgMieter, jcb_whgKueche, jcb_whgHeizung, jcb_whgBad;
     private JTextPane jtp_whgUebersicht;
+    private HTMLEditorKit eKit = new HTMLEditorKit();    
     private JTextField jtf_whgId, jtf_whgQm, jtf_whgZimmer, jtf_whgZusatz, 
             jtf_whgKaltmiete, jtf_whgNebenkosten;
+    private JButton jb_whgSave, jb_whgClear;
+    private ArrayList al_wohnungen;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Dialogfenster Programminformationen                       //
@@ -127,11 +134,26 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     JLabel jl_sneEigentuemerId, jl_sneTitel, jl_sneAnrede, jl_sneNachname,
             jl_sneVorname, jl_sneStrasse, jl_snePlz, jl_sneOrt, jl_sneGeburtstag,
             jl_sneTelefon, jl_sneEmail;
-    JButton jb_sneClear;
+    JButton jb_sneClear,jb_sneSave;
     JTextField jtf_sneEigentuemerId, jtf_sneNachname, jtf_sneVorname, jtf_sneStrasse,
             jtf_snePlz, jtf_sneOrt, jtf_sneGeburtstag, jtf_sneTelefon, jtf_sneEmail;    
     JComboBox jcb_sneTitel, jcb_sneAnrede;
-    LocalDate gebtag;
+    LocalDate ld_sneGebtag;
+    ///////////////////////////////////////////////////////////////////////////
+    //                                                                       //
+    // Deklaration Dialogfenster Neuer Mieter                          //
+    //                                                                       //
+    ///////////////////////////////////////////////////////////////////////////  
+    JDialog showNewMieter;
+    JLabel jl_snmMieterId, jl_snmTitel, jl_snmAnrede, jl_snmNachname,
+            jl_snmVorname, jl_snmStrasse, jl_snmPlz, jl_snmOrt, jl_snmGeburtstag,
+            jl_snmTelefon, jl_snmEmail, jl_snmMieterSeid;
+    JButton jb_snmClear, jb_snmSave;
+    JTextField jtf_snmMieterId, jtf_snmNachname, jtf_snmVorname, jtf_snmStrasse,
+            jtf_snmPlz, jtf_snmOrt, jtf_snmGeburtstag, jtf_snmTelefon, jtf_snmEmail,
+            jtf_snmMieterSeid;    
+    JComboBox jcb_snmTitel, jcb_snmAnrede;
+    LocalDate ld_snmGebtag, ld_snmMieterSeid;    
     /**
      * Setzen des Anwendungsfensters
      * @author Markus Badzura
@@ -402,6 +424,57 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         }
     }
     /**
+     * Befüllen des Auswahlfeldes Mieter
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillMieter()
+    {
+        String[] mieter = database.getMieter();
+        for (int i = 0; i<mieter.length;i++)
+        {
+            jcb_whgMieter.addItem(mieter[i]);
+        }
+        jcb_whgMieter.addItemListener(this);
+        jcb_whgMieter.repaint();
+    }
+    /**
+     * Erstinitialisierung Übersicht aktuelle Immobilie bei Neuer Wohnung
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillWhgUebersicht()
+    {
+        al_wohnungen = database.getWohnungsUebersicht(aktuelleImmo);
+        Immo_wohnungen iwTemp = new Immo_wohnungen();
+        String whgUebersicht = 
+                "<html>"
+                + "<table>"
+                    + "<thead>"
+                        + "<tr>"
+                            + "<th>Wohnungsnummer</th>"
+                            + "<th>Mieter</th>"
+                            + "<th>qm</th>"
+                            + "<th>Zimmer</th>"
+                            + "<th>Kaltmiete</th>"
+                            + "<th>Nebenkosten</th>"
+                        + "</tr>"
+                    + "<tbody>";
+        for(int i = 0; i<al_wohnungen.size();i++)
+        {
+            iwTemp = (Immo_wohnungen) al_wohnungen.get(i);
+            whgUebersicht = whgUebersicht +
+                    "<tr><td>"+iwTemp.getWohnungsid()+"</td>"
+                    + "<td>"+iwTemp.getMieter()+"</td>"
+                    + "<td>"+iwTemp.getQm()+"</td>"
+                    + "<td>"+iwTemp.getZimmer() +"</td>"
+                    + "<td>"+iwTemp.getKaltmiete()+"</td>"
+                    + "<td>"+iwTemp.getNebenkosten()+"</td></tr>";
+        }
+        whgUebersicht = whgUebersicht + "</tbody></table></html>";
+        jtp_whgUebersicht.setText(whgUebersicht);
+    }
+    /**
      * Setzen der neuen Immobiliennummer in das Textfeld. Anzahl der Immo-
      * bilien wird über Datenbankabfrage ermittelt und dieser Wert wird um
      * 1 inkrementiert.
@@ -411,6 +484,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     private void setImmobiliennummer()
     {
         int newImmoNummer = Integer.parseInt(database.getNewImmobiliennummer())+1;
+        aktuelleImmo = newImmoNummer;
         jtf_immoNr.setText(String.valueOf(newImmoNummer));
     }
     /**
@@ -423,6 +497,19 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     {
         int newEigentuemerNummer = Integer.parseInt(database.getNewEigentuemerNummer())+1;
         jtf_sneEigentuemerId.setText(String.valueOf(newEigentuemerNummer));
+    }
+    /**
+     * Setzen der neuen Mieter-ID in das Textfeld. Die Anzahl der
+     * Mieter wird in einer Datenbankabfrage ermittelt und um 1
+     * inkrementiert.
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setNewMieterId()
+    {
+        int newMieterNummer = Integer.parseInt(database
+        .getNewMieterNummer())+1;
+        jtf_snmMieterId.setText(String.valueOf(newMieterNummer));
     }
     /**
      * Befüllen des Auswahlfeldes Titel
@@ -459,8 +546,122 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
      */
     private void setTabNewWohnung()
     {
+        int x1 = 10;
+        int x2 = SCREENSIZE.width/4;
+        int x3 = SCREENSIZE.width/2;
+        int breite = x2-20;
+        int hoehe = 25;
         jp_wohnungen = new JPanel();
-        jp_wohnungen.setSize(this.getSize());        
+        jp_wohnungen.setSize(this.getSize());   
+        jp_wohnungen.setLayout(null);
+        jl_whgImmoNummer = new JLabel("Immobiliennummer: "+Integer.toString(aktuelleImmo));
+        jl_whgImmoNummer.setFont(jl_whgImmoNummer.getFont().deriveFont(14f));
+        jl_whgImmoNummer.setBounds(x1,10,breite,hoehe);
+        jl_whgImmoAnschrift = new JLabel(database.getImmoAnschrift(aktuelleImmo));
+        jl_whgImmoAnschrift.setFont(jl_whgImmoAnschrift.getFont().deriveFont(14f));
+        jl_whgImmoAnschrift.setBounds(x2,10,breite,hoehe);
+        jl_whgId = new JLabel("Wohnungskennzeichnung: ",JLabel.RIGHT);
+        jl_whgId.setFont(jl_whgId.getFont().deriveFont(14f));
+        jl_whgId.setBounds(x1,50,breite,hoehe);
+        jl_whgMieter = new JLabel("Mieter: ",JLabel.RIGHT);
+        jl_whgMieter.setFont(jl_whgMieter.getFont().deriveFont(14f));
+        jl_whgMieter.setBounds(x1,80,breite,hoehe);
+        jl_whgQm = new JLabel("Quadratmeter: ",JLabel.RIGHT);
+        jl_whgQm.setFont(jl_whgQm.getFont().deriveFont(14f));
+        jl_whgQm.setBounds(x1,110,breite,hoehe);
+        jl_whgZimmer = new JLabel("Zimmer: ",JLabel.RIGHT);
+        jl_whgZimmer.setFont(jl_whgZimmer.getFont().deriveFont(14f));
+        jl_whgZimmer.setBounds(x1,140,breite,hoehe);
+        jl_whgKuechenid = new JLabel("Küche: ",JLabel.RIGHT);
+        jl_whgKuechenid.setFont(jl_whgKuechenid.getFont().deriveFont(14f));
+        jl_whgKuechenid.setBounds(x1,170,breite,hoehe);
+        jl_whgHeizungid = new JLabel("Heizung: ",JLabel.RIGHT);
+        jl_whgHeizungid.setFont(jl_whgHeizungid.getFont().deriveFont(14f));
+        jl_whgHeizungid.setBounds(x1,200,breite,hoehe);
+        jl_whgBadid = new JLabel("Bad: ",JLabel.RIGHT);
+        jl_whgBadid.setFont(jl_whgBadid.getFont().deriveFont(14f));
+        jl_whgBadid.setBounds(x1,230,breite,hoehe);
+        jl_whgZusatz = new JLabel("Zusatzausstattung: ",JLabel.RIGHT);        
+        jl_whgZusatz.setFont(jl_whgZusatz.getFont().deriveFont(14f));
+        jl_whgZusatz.setBounds(x1,260,breite,hoehe);
+        jl_whgKaltmiete = new JLabel("Kaltmiete: ",JLabel.RIGHT);
+        jl_whgKaltmiete.setFont(jl_whgKaltmiete.getFont().deriveFont(14f));
+        jl_whgKaltmiete.setBounds(x1,290,breite,hoehe);
+        jl_whgNebenkosten = new JLabel("Nebenkosten: ",JLabel.RIGHT);
+        jl_whgNebenkosten.setFont(jl_whgNebenkosten.getFont().deriveFont(14f));
+        jl_whgNebenkosten.setBounds(x1,320,breite,hoehe);
+        jb_whgSave = new JButton("Speichern");
+        jb_whgSave.setFont(jb_whgSave.getFont().deriveFont(14f));
+        jb_whgSave.addActionListener(this);
+        jb_whgSave.setBounds(x1,370,breite,hoehe);
+        jtf_whgId = new JTextField();
+        jtf_whgId.setFont(jtf_whgId.getFont().deriveFont(14f));
+        jtf_whgId.setBounds(x2,50,breite,hoehe);
+        jcb_whgMieter = new JComboBox();
+        fillMieter();
+        jcb_whgMieter.setFont(jcb_whgMieter.getFont().deriveFont(14f));
+        jcb_whgMieter.setBounds(x2,80,breite,hoehe);
+        jcb_whgMieter.addItemListener(this);
+        jtf_whgQm = new JTextField();
+        jtf_whgQm.setFont(jtf_whgQm.getFont().deriveFont(14f));
+        jtf_whgQm.setBounds(x2,110,breite,hoehe);
+        jtf_whgZimmer = new JTextField();
+        jtf_whgZimmer.setFont(jtf_whgZimmer.getFont().deriveFont(14f));
+        jtf_whgZimmer.setBounds(x2,140,breite,hoehe);
+        jcb_whgKueche = new JComboBox();
+        fillKueche();
+        jcb_whgKueche.setFont(jcb_whgKueche.getFont().deriveFont(14f));
+        jcb_whgKueche.setBounds(x2,170,breite,hoehe);
+        jcb_whgHeizung = new JComboBox();
+        fillHeizung();
+        jcb_whgHeizung.setFont(jcb_whgHeizung.getFont().deriveFont(14f));
+        jcb_whgHeizung.setBounds(x2,200,breite,hoehe);
+        jcb_whgBad = new JComboBox();
+        fillBad();
+        jcb_whgBad.setFont(jcb_whgBad.getFont().deriveFont(14f));
+        jcb_whgBad.setBounds(x2,230,breite,hoehe);
+        jtf_whgZusatz = new JTextField();
+        jtf_whgZusatz.setFont(jtf_whgZusatz.getFont().deriveFont(14f));
+        jtf_whgZusatz.setBounds(x2,260,breite,hoehe);
+        jtf_whgKaltmiete = new JTextField();
+        jtf_whgKaltmiete.setFont(jtf_whgKaltmiete.getFont().deriveFont(14f));
+        jtf_whgKaltmiete.setBounds(x2,290,breite,hoehe);
+        jtf_whgNebenkosten = new JTextField();
+        jtf_whgNebenkosten.setFont(jtf_whgNebenkosten.getFont().deriveFont(14f));
+        jtf_whgNebenkosten.setBounds(x2,320,breite,hoehe);
+        jb_whgClear = new JButton ("zurücksetzen");
+        jb_whgClear.setFont(jb_whgClear.getFont().deriveFont(14f));
+        jb_whgClear.addActionListener(this);
+        jb_whgClear.setBounds(x2,370,breite,hoehe);
+        jtp_whgUebersicht = new JTextPane();
+        jtp_whgUebersicht.setEditorKit(eKit);
+        jtp_whgUebersicht.setBounds(x3+20,10,x3-40,SCREENSIZE.height);
+        fillWhgUebersicht();
+        jp_wohnungen.add(jtp_whgUebersicht);
+        jp_wohnungen.add(jb_whgClear);
+        jp_wohnungen.add(jtf_whgNebenkosten);
+        jp_wohnungen.add(jtf_whgKaltmiete);
+        jp_wohnungen.add(jtf_whgZusatz);
+        jp_wohnungen.add(jcb_whgBad);
+        jp_wohnungen.add(jcb_whgHeizung);
+        jp_wohnungen.add(jcb_whgKueche);
+        jp_wohnungen.add(jtf_whgZimmer);
+        jp_wohnungen.add(jtf_whgQm);
+        jp_wohnungen.add(jcb_whgMieter);
+        jp_wohnungen.add(jtf_whgId);
+        jp_wohnungen.add(jb_whgSave);
+        jp_wohnungen.add(jl_whgNebenkosten);
+        jp_wohnungen.add(jl_whgKaltmiete);
+        jp_wohnungen.add(jl_whgZusatz);
+        jp_wohnungen.add(jl_whgBadid);
+        jp_wohnungen.add(jl_whgHeizungid);
+        jp_wohnungen.add(jl_whgKuechenid);
+        jp_wohnungen.add(jl_whgZimmer);
+        jp_wohnungen.add(jl_whgQm);
+        jp_wohnungen.add(jl_whgMieter);
+        jp_wohnungen.add(jl_whgId);
+        jp_wohnungen.add(jl_whgImmoAnschrift);
+        jp_wohnungen.add(jl_whgImmoNummer);  
     }
     /**
      * Panel für Tab Neue Immobilie
@@ -539,12 +740,342 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jp_immobilie.add(jb_immoNeu);        
     }
     /**
+     * logische Überprüfung der eingegebenen Werte auf Datenbankkon-
+     * sitzenz, Richtigkeit und Vollständigkeit der Eintragungen.
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void pruefeMieter()
+    {
+        String fehler = "";
+        String snmNachname = jtf_snmNachname.getText().trim();
+        String snmVorname = jtf_snmVorname.getText().trim();
+        String snmStrasse = jtf_snmStrasse.getText().trim();
+        String snmPlz = jtf_snmPlz.getText().trim();
+        String snmOrt = jtf_snmOrt.getText().trim();
+        String snmGeburtstag = jtf_snmGeburtstag.getText().trim();
+        String snmTelefon = jtf_snmTelefon.getText().trim();
+        String snmEmail = jtf_snmEmail.getText().trim();
+        String snmMieterSeid = jtf_snmMieterSeid.getText().trim();
+        int snmTitel = jcb_snmTitel.getSelectedIndex();
+        int snmAnrede = jcb_snmAnrede.getSelectedIndex();
+        if (snmAnrede == 0)
+        {
+            fehler = fehler + "Sie müssen eine Anrede auswählen";
+            jcb_snmAnrede.requestFocus();
+        }        
+        if ("".equals(snmNachname.trim())) 
+        {
+            fehler = fehler + "Sie haben keinen Nachnamen eingetragen.\n";
+            jtf_snmNachname.requestFocus();
+        }
+        if ("".equals(snmVorname))
+        {
+            fehler = fehler + "Sie haben keinen Vornamen eingetragen.\n";
+            jtf_snmVorname.requestFocus();
+        }
+        if ("".equals(snmStrasse))
+        {
+            fehler = fehler + "Sie haben die Strasse nicht eingetragen.\n";
+            jtf_snmStrasse.requestFocus();
+        }
+        if ("".equals(snmPlz))
+        {
+            fehler = fehler + "Sie haben keine Postleitzahl eingetragen.\n";
+            jtf_snmPlz.requestFocus();
+        }
+        else
+        {
+            if (snmPlz.length() != 5)
+            {
+                fehler = fehler + "Die Postleitzahl muss 5-stellig sein.\n";
+                jtf_snmPlz.requestFocus();
+            }
+            else
+            {
+                if (!snmPlz.matches("[0-9]{5}"))
+                {
+                    fehler = fehler + "Die Postleitzahl besteht "
+                            + "nur aus Ziffern.\n";
+                    jtf_snmPlz.requestFocus();
+                }
+            }
+        }
+        if ("".equals(snmOrt))
+        {
+            fehler = fehler + "Sie haben keinen Ort eingegeben.\n";
+            jtf_snmOrt.requestFocus();
+        }
+        if (!"".equals(snmGeburtstag))
+        {
+            try
+            {
+                int jahr = Integer.parseInt(snmGeburtstag.substring(6));
+                int monat = Integer.parseInt(snmGeburtstag.substring(3,5));
+                int tag = Integer.parseInt(snmGeburtstag.substring(0,2));
+                ld_snmGebtag = LocalDate.of(jahr,monat,tag);
+            }
+            catch(NumberFormatException e)
+            {
+                fehler = fehler + "Geben Sie das Geburtsdatum im "
+                        + "Format tt.mm.jjjj ein.\n";
+                jtf_snmGeburtstag.requestFocus();
+            }
+        }
+        if (!"".equals(snmEmail))
+        {
+            if(!snmEmail.matches("[\\w|.|-]+@\\w[\\w|-]*\\.[a-z]{2,4}"))
+            {
+                fehler = fehler + "Geben Sie eine gültige eMail-Adresse ein.\n";
+                jtf_snmEmail.requestFocus();
+            }
+        }
+        if ("".equals(snmTelefon))
+        {
+            fehler = fehler + "Sie haben keine Telefonnummer eingegeben.\n";
+            jtf_snmTelefon.requestFocus();
+        }
+        else
+        {
+            if(snmTelefon.length()>20)
+            {
+                fehler = fehler + "Die Telefonnummer ist zu lang.\n";
+                jtf_snmTelefon.requestFocus();
+            }
+            else
+            {
+                if (!snmTelefon.matches("[0-9/. \\-]+"))
+                {
+                    fehler = fehler + "Die Telefonnummer darf nur "
+                            + "aus Ziffern, . / und - bestehen.\n";
+                    jtf_snmTelefon.requestFocus();
+                }
+            }
+        }
+        if (!"".equals(snmMieterSeid))
+        {
+            try
+            {
+                int jahr = Integer.parseInt(snmMieterSeid.substring(6));
+                int monat = Integer.parseInt(snmMieterSeid.substring(3,5));
+                int tag = Integer.parseInt(snmMieterSeid.substring(0,2));
+                ld_snmMieterSeid = LocalDate.of(jahr,monat,tag);
+            }
+            catch(NumberFormatException e)
+            {
+                fehler = fehler + "Geben Sie das Datum, seid wann das"
+                        + "Miterverhältnis besteht, im Format tt.mm.jjjj ein.\n";
+                jtf_snmMieterSeid.requestFocus();
+            }
+        } 
+        else
+        {
+            fehler = fehler + "Geben Sie an, seid wann der Mieter Mieter"
+                    + "ist.";
+                    jtf_snmMieterSeid.requestFocus();
+        }
+        if (!"".equals(fehler))
+        {
+            showNewMieter.setModal(false);
+            JOptionPane.showMessageDialog(null, fehler,
+                "Fehlerhafte Eingaben", JOptionPane.OK_OPTION);  
+            showNewMieter.setModal(true);
+        }
+        else
+        {
+            String gebTag,mieterSeid;
+            try
+            {
+                gebTag = ld_sneGebtag.toString();
+            }
+            catch(NullPointerException e)
+            {
+                gebTag = "0000-00-00";
+            }
+            try
+            {
+                mieterSeid = ld_snmMieterSeid.toString();
+            }
+            catch(NullPointerException e)
+            {
+                mieterSeid = "0000-00-00";
+            }                      
+            database.saveNewMieter(snmTitel, snmAnrede, snmNachname,
+                    snmVorname, snmStrasse, snmPlz, snmOrt, gebTag,
+                    mieterSeid, snmTelefon, snmEmail);
+            showNewMieter.setModal(false);
+            showNewMieter.dispose();
+            jcb_whgMieter.removeItemListener(this);
+            jcb_whgMieter.removeAll();
+            fillMieter();      
+        }        
+    }
+    /**
+     * logische Überprüfung der eingegebenen Werte auf Datenbankkon-
+     * sitenz, Richtigkeit und Vollständigkeit der Eintragungen
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void pruefeWohnung()
+    {
+        String fehler = "";
+        double prWhg_qm = 0; 
+        double prWhg_kaltmiete = 0;
+        double prWhg_nebenkosten = 0;
+        int prWhg_zimmeranzahl = 0;
+        if ("".equals(jtf_whgId.getText().trim()))
+        {
+            fehler = fehler + "Wohnungskennzeichnung wurde nicht ein"
+                    + "getragen.\n";
+            jtf_whgId.requestFocus();
+        }
+        if ("".equals(jtf_whgQm.getText().trim()))
+        {
+            fehler = fehler + "Quadratmeteranzahl der Wohnung nicht "
+                    + "eingetragen\n";
+            jtf_whgQm.requestFocus();
+        }
+        else
+        {
+            if (!jtf_whgQm.getText().trim().matches("[1-9][0-9]{1,2}[/.][0-9]{0,1}"))
+            {
+                fehler = fehler + "Eingabeformat für Quadratmeter ist "
+                        + "0xx.x. Beispiel: 123.7.\n";
+                jtf_whgQm.requestFocus();
+            }
+            else
+            {
+                prWhg_qm = Double.parseDouble(jtf_whgQm.getText().trim());
+            }
+        }
+        if ("".equals(jtf_whgZimmer.getText().trim()))
+        {
+            fehler = fehler + "Sie haben keine Zimmeranzahl eingegeben.\n";
+            jtf_whgZimmer.requestFocus();
+        }
+        else
+        {
+            try
+            {
+                prWhg_zimmeranzahl = Integer.parseInt(jtf_whgZimmer.getText().
+                        trim());
+            }
+            catch(NumberFormatException e)
+            {
+                fehler = fehler + "Die Zimmeranzahl kann nur aus Ziffern"
+                        + "bestehen.\n";
+                jtf_whgZimmer.requestFocus();
+            }
+        }
+        if (jcb_whgKueche.getSelectedIndex() == 0)
+        {
+            fehler = fehler + "Sie müssen die Küchenausstatung aus"
+                    + "wählen.\n";
+            jcb_whgKueche.requestFocus();
+        }
+        if (jcb_whgHeizung.getSelectedIndex() == 0)
+        {
+            fehler = fehler + "Sie müssen Heizungsangaben auswählen.\n";
+            jcb_whgHeizung.requestFocus();
+        }
+        if (jcb_whgBad.getSelectedIndex() == 0)
+        {
+            fehler = fehler + "Sie müssen Angaben über das Bad auswählen.\n";
+            jcb_whgBad.requestFocus();
+        }
+        if ("".equals(jtf_whgKaltmiete.getText().trim()))
+        {
+            fehler = fehler + "Sie müssen die Kaltmiete eingeben.\n";
+            jtf_whgKaltmiete.requestFocus();
+        }
+        else
+        {
+            if (!jtf_whgKaltmiete.getText().trim()
+                    .matches("[1-9][0-9]{1,3}[/.][0-9]{2}"))
+            {
+                fehler = fehler + "Die Kaltmiete kann höchstens 9999.99"
+                        + "betragen und muss 2 Stellen vor und 2 Stellen"
+                        + "nach dem Dezimalzeichen (.) haben.\n";
+                jtf_whgKaltmiete.requestFocus();
+            }
+            else
+            {
+                prWhg_kaltmiete = Double.parseDouble(jtf_whgKaltmiete.
+                        getText().trim());
+            }
+        }
+        if ("".equals(jtf_whgNebenkosten.getText().trim()))
+        {
+            fehler = fehler + "Sie müssen die Nebenkosten eingeben.\n";
+            jtf_whgNebenkosten.requestFocus();
+        }
+        else
+        {
+            if (!jtf_whgNebenkosten.getText().trim()
+                    .matches("[1-9][0-9]{1,3}[/.][0-9]{2}"))
+            {
+                fehler = fehler + "Die Nebenkosten können höchstens 9999.99"
+                        + "betragen und müssen 2 Stellen vor und 2 Stellen"
+                        + "nach dem Dezimalzeichen (.) haben.\n";
+                jtf_whgNebenkosten.requestFocus();
+            }
+            else
+            {
+                prWhg_nebenkosten = Double.parseDouble(jtf_whgNebenkosten.
+                        getText().trim());
+            }
+        }  
+        if("".equals(fehler))
+        {
+            database.saveNewWohnung(jtf_whgId.getText().trim(),
+                    aktuelleImmo, jcb_whgMieter.getSelectedIndex(), 
+                    prWhg_qm, prWhg_zimmeranzahl, jcb_whgKueche
+                    .getSelectedIndex(), jcb_whgHeizung.getSelectedIndex(), 
+                    jcb_whgBad.getSelectedIndex(), jtf_whgZusatz.getText()
+                    .trim(), prWhg_kaltmiete, prWhg_nebenkosten);
+//            (String wohnungsid, String mieter, double qm, double zimmer, 
+//            String kueche, String heizung, String bad, String zusatz, 
+//            double kaltmiete, double nebenkosten)
+//            tempIw = new Immo_wohnungen(jtf)
+            fillWhgUebersicht();
+            jp_wohnungen.repaint();
+            resetWohnung();
+        }
+        else
+        {
+            JOptionPane.showMessageDialog(null, fehler,
+                "Fehlerhafte Eingaben", JOptionPane.OK_OPTION);  
+        }
+    }
+    /**
+     * Zurücksetzen der Eingaben im Tab Wohnungen
+     * JComboBoxen auf Index 0 setzen und Textfelder leeren
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void resetWohnung()
+    {
+        jcb_whgMieter.setSelectedIndex(0);
+        jcb_whgKueche.setSelectedIndex(0);
+        jcb_whgHeizung.setSelectedIndex(0);
+        jcb_whgBad.setSelectedIndex(0);
+        jtf_whgId.setText("");
+        jtf_whgQm.setText("");
+        jtf_whgZimmer.setText("");
+        jtf_whgZusatz.setText("");
+        jtf_whgKaltmiete.setText("");
+        jtf_whgNebenkosten.setText("");
+        jtf_whgId.requestFocus();
+    }
+    /**
      * Fensteransicht für das Anlegen einer neuen Immobilie
      * @author Markus Badzura
      * @since 1.0.001
      */
     private void setImmoNew()
     {
+        this.remove(this.getContentPane());
+        this.repaint();
         jtp_immobilie = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
         jtp_immobilie.setSize(this.getSize());
         setTabNewImmobilie();
@@ -630,7 +1161,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
                 int jahr = Integer.parseInt(sneGeburtstag.substring(6));
                 int monat = Integer.parseInt(sneGeburtstag.substring(3,5));
                 int tag = Integer.parseInt(sneGeburtstag.substring(0,2));
-                gebtag = LocalDate.of(jahr,monat,tag);
+                ld_sneGebtag = LocalDate.of(jahr,monat,tag);
             }
             catch(NumberFormatException e)
             {
@@ -679,7 +1210,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             String gebTag;
             try
             {
-                gebTag = gebtag.toString();
+                gebTag = ld_sneGebtag.toString();
             }
             catch(NullPointerException e)
             {
@@ -689,8 +1220,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             showNewEigentuemer.dispose();
             jcb_immoEigentuemer.removeItemListener(this);
             jcb_immoEigentuemer.removeAllItems();
-            fillEigentuemer();
-            
+            fillEigentuemer();      
         }
     }
     /**
@@ -733,7 +1263,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             fehler = fehler + "Ort ist nicht eingetragen.\n";
             jtf_immoOrt.requestFocus();
         }
-        if (jcb_immoEigentuemer.getSelectedIndex()== 0);
+        if (jcb_immoEigentuemer.getSelectedIndex()== 0)
         {
             fehler = fehler + "Eigentümer wurde noch nicht hinzugefügt.";
         }
@@ -745,6 +1275,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
             jtp_immobilie.setEnabledAt(1, true);
             jtp_immobilie.setSelectedIndex(1);
             jtp_immobilie.setEnabledAt(0, false);
+            jl_whgImmoAnschrift.setText(database.getImmoAnschrift(aktuelleImmo));
         }
         else
         {
@@ -784,6 +1315,148 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         showAbout.add(jl_saAnlass);
         showAbout.add(jl_saAuthor);        
         showAbout.setVisible(true);        
+    }
+    /**
+     * Dialogfenster zur Eingabe eines neuen Mieters
+     * author Markus Badzura
+     * @since 1.0.001
+     */
+    private void showNewMieter()
+    {
+        jcb_whgMieter.setSelectedIndex(0);
+        showNewMieter = new JDialog();
+        showNewMieter.setTitle("Programminformationen");
+        showNewMieter.setSize(400,500);    
+        showNewMieter.setLocation(SCREENSIZE.width/2-150,SCREENSIZE.height/2-100);
+        showNewMieter.setIconImage(ICON.getImage());
+        showNewMieter.setLayout(null);
+        showNewMieter.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        showNewMieter.addWindowListener(new WindowAdapter() 
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                exitDialog(showNewMieter);
+            }
+        });    
+        int breite = 175;
+        int hoehe = 25;
+        int posx = breite+10;
+        jl_snmMieterId = new JLabel("Mieternummer: ",JLabel.RIGHT);
+        jl_snmMieterId.setFont(jl_snmMieterId.getFont().deriveFont(14f));
+        jl_snmMieterId.setBounds(10,10,breite,hoehe);
+        jl_snmTitel = new JLabel("Titel: ",JLabel.RIGHT);
+        jl_snmTitel.setFont(jl_snmTitel.getFont().deriveFont(14f));
+        jl_snmTitel.setBounds(10,40,breite,hoehe);
+        jl_snmAnrede = new JLabel("Anrede: ",JLabel.RIGHT);
+        jl_snmAnrede.setFont(jl_snmAnrede.getFont().deriveFont(14f));
+        jl_snmAnrede.setBounds(10,70,breite,hoehe);
+        jl_snmNachname = new JLabel("Nachname: ",JLabel.RIGHT);
+        jl_snmNachname.setFont(jl_snmNachname.getFont().deriveFont(14f));
+        jl_snmNachname.setBounds(10,100,breite,hoehe);
+        jl_snmVorname = new JLabel("Vorname: ",JLabel.RIGHT);
+        jl_snmVorname.setFont(jl_snmVorname.getFont().deriveFont(14f));
+        jl_snmVorname.setBounds(10,130,breite,hoehe);
+        jl_snmStrasse = new JLabel("Straße: ",JLabel.RIGHT);
+        jl_snmStrasse.setFont(jl_snmStrasse.getFont().deriveFont(14f));
+        jl_snmStrasse.setBounds(10,160,breite,hoehe);
+        jl_snmPlz = new JLabel("PLZ: ",JLabel.RIGHT);
+        jl_snmPlz.setFont(jl_snmPlz.getFont().deriveFont(14f));
+        jl_snmPlz.setBounds(10,190,breite,hoehe);
+        jl_snmOrt = new JLabel("Ort: ",JLabel.RIGHT);
+        jl_snmOrt.setFont(jl_snmOrt.getFont().deriveFont(14f));
+        jl_snmOrt.setBounds(10,220,breite,hoehe);
+        jl_snmGeburtstag = new JLabel("Geburtstag: ",JLabel.RIGHT);
+        jl_snmGeburtstag.setFont(jl_snmGeburtstag.getFont().deriveFont(14f));
+        jl_snmGeburtstag.setBounds(10,250,breite,hoehe);
+        jl_snmTelefon = new JLabel("Telefon: ",JLabel.RIGHT);
+        jl_snmTelefon.setFont(jl_snmTelefon.getFont().deriveFont(14f));
+        jl_snmTelefon.setBounds(10,280,breite,hoehe);
+        jl_snmEmail = new JLabel("E-Mail-Adresse: ",JLabel.RIGHT);
+        jl_snmEmail.setFont(jl_snmEmail.getFont().deriveFont(14f));
+        jl_snmEmail.setBounds(10,310,breite,hoehe);
+        jl_snmMieterSeid = new JLabel("Mieter seid: ",JLabel.RIGHT);
+        jl_snmMieterSeid.setFont(jl_snmMieterSeid.getFont().deriveFont(14f));
+        jl_snmMieterSeid.setBounds(10,340,breite,hoehe);
+        jb_snmClear = new JButton("abbrechen");
+        jb_snmClear.setBounds(10,400,breite,hoehe);
+        jb_snmClear.addActionListener(this);
+        jtf_snmMieterId = new JTextField();
+        jtf_snmMieterId.setFont(jtf_snmMieterId.getFont().deriveFont(14f));
+        jtf_snmMieterId.setEditable(false);
+        jtf_snmMieterId.setBounds(posx,10,breite,hoehe);
+        setNewMieterId();
+        jcb_snmTitel = new JComboBox();
+        jcb_snmTitel.setFont(jcb_snmTitel.getFont().deriveFont(14f));
+        jcb_snmTitel.setBounds(posx,40,breite,hoehe);
+        setTitel(jcb_snmTitel);
+        jcb_snmAnrede = new JComboBox();
+        jcb_snmAnrede.setFont(jcb_snmAnrede.getFont().deriveFont(14f));
+        jcb_snmAnrede.setBounds(posx,70,breite,hoehe);
+        setAnrede(jcb_snmAnrede);
+        jtf_snmNachname = new JTextField();
+        jtf_snmNachname.setFont(jtf_snmNachname.getFont().deriveFont(14f));
+        jtf_snmNachname.setBounds(posx,100,breite,hoehe);
+        jtf_snmVorname = new JTextField();
+        jtf_snmVorname.setFont(jtf_snmVorname.getFont().deriveFont(14f));
+        jtf_snmVorname.setBounds(posx,130,breite,hoehe);    
+        jtf_snmStrasse = new JTextField();
+        jtf_snmStrasse.setFont(jtf_snmStrasse.getFont().deriveFont(14f));
+        jtf_snmStrasse.setBounds(posx,160,breite,hoehe);
+        jtf_snmStrasse.setText(jtf_immoStr.getText().trim());
+        jtf_snmPlz = new JTextField();
+        jtf_snmPlz.setFont(jtf_snmPlz.getFont().deriveFont(14f));
+        jtf_snmPlz.setBounds(posx,190,breite,hoehe);
+        jtf_snmPlz.setText(jtf_immoPlz.getText().trim());
+        jtf_snmOrt = new JTextField();
+        jtf_snmOrt.setFont(jtf_snmOrt.getFont().deriveFont(14f));
+        jtf_snmOrt.setBounds(posx,220,breite,hoehe);
+        jtf_snmOrt.setText(jtf_immoOrt.getText().trim());
+        jtf_snmGeburtstag = new JTextField();
+        jtf_snmGeburtstag.setFont(jtf_snmGeburtstag.getFont().deriveFont(14f));
+        jtf_snmGeburtstag.setBounds(posx,250,breite,hoehe);
+        jtf_snmGeburtstag.setToolTipText("Format: tt.mm.jjjj");
+        jtf_snmTelefon = new JTextField();
+        jtf_snmTelefon.setFont(jtf_snmTelefon.getFont().deriveFont(14f));
+        jtf_snmTelefon.setBounds(posx,280,breite,hoehe);
+        jtf_snmEmail = new JTextField();
+        jtf_snmEmail.setFont(jtf_snmEmail.getFont().deriveFont(14f));
+        jtf_snmEmail.setBounds(posx,310,breite,hoehe);
+        jtf_snmMieterSeid = new JTextField();
+        jtf_snmMieterSeid.setFont(jtf_snmMieterSeid.getFont().deriveFont(14f));
+        jtf_snmMieterSeid.setBounds(posx,340,breite,hoehe);
+        jtf_snmMieterSeid.setToolTipText("Format: tt.mm.jjjj");
+        jb_snmSave = new JButton("Speichern");
+        jb_snmSave.setBounds(posx,400,breite,hoehe);
+        jb_snmSave.addActionListener(this);
+        showNewMieter.add(jl_snmTitel);
+        showNewMieter.add(jl_snmAnrede);
+        showNewMieter.add(jl_snmNachname);
+        showNewMieter.add(jl_snmVorname);
+        showNewMieter.add(jl_snmStrasse);
+        showNewMieter.add(jl_snmPlz);
+        showNewMieter.add(jl_snmOrt);
+        showNewMieter.add(jl_snmGeburtstag);
+        showNewMieter.add(jl_snmTelefon);
+        showNewMieter.add(jl_snmEmail);
+        showNewMieter.add(jl_snmMieterSeid);
+        showNewMieter.add(jb_snmClear);
+        showNewMieter.add(jtf_snmMieterId);
+        showNewMieter.add(jcb_snmTitel);
+        showNewMieter.add(jcb_snmAnrede);
+        showNewMieter.add(jtf_snmNachname);
+        showNewMieter.add(jtf_snmVorname);
+        showNewMieter.add(jtf_snmStrasse);  
+        showNewMieter.add(jtf_snmPlz);
+        showNewMieter.add(jtf_snmOrt);
+        showNewMieter.add(jtf_snmGeburtstag);
+        showNewMieter.add(jtf_snmTelefon);
+        showNewMieter.add(jtf_snmEmail);
+        showNewMieter.add(jtf_snmMieterSeid);
+        showNewMieter.add(jl_snmMieterId);        
+        showNewMieter.add(jb_snmSave);  
+        showNewMieter.setModal(true);
+        showNewMieter.setVisible(true);        
     }
     /**
      * Dialogfenster zur Eingabe eines neuen Eigentümers
@@ -1063,6 +1736,27 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             pruefeNewEigentuemer();
         }
+        // Button Neue Wohnung speichern
+        if (e.getSource() == jb_whgSave)
+        {
+            pruefeWohnung();
+        }
+        // Button Neue Wohnung Eingabe zurücksetzen
+        if (e.getSource() == jb_whgClear)
+        {
+            resetWohnung();
+        }
+        // Button Neuen Mieter speichern
+        if (e.getSource() == jb_snmSave)
+        {
+            pruefeMieter();
+            jcb_whgMieter.setSelectedIndex(0);
+        }
+        if (e.getSource() == jb_snmClear)
+        {
+            showNewMieter.dispose();
+            jcb_whgMieter.setSelectedIndex(0);
+        }
     }
     /**
      * KeyListener Aktion für keyTyped
@@ -1161,9 +1855,16 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             if("Neue Auswahl hinzufügen".equals(jcb_immoEigentuemer.getSelectedItem().toString()))
             {
-                jcb_immoEigentuemer.setSelectedIndex(0);
-                
+                jcb_immoEigentuemer.setSelectedIndex(0);            
                 showNewEigentuemer();
+            }
+        }
+        if (e.getSource() == jcb_whgMieter)
+        {
+            if("Neue Auswahl hinzufügen".equals(jcb_whgMieter.getSelectedItem().toString()))
+            {
+                jcb_whgMieter.setSelectedIndex(0);
+                showNewMieter();
             }
         }
     }
