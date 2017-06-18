@@ -89,6 +89,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////       
     private JTabbedPane jtp_immobilie;
+    private boolean immobilie;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Tab Neue Immobilie                                        //
@@ -122,47 +123,63 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
     // Deklaration Dialogfenster Programminformationen                       //
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////     
-    JDialog showAbout;
-    JLabel jl_saTitel, jl_saAnlass, jl_saAuthor;  
+    private JDialog showAbout;
+    private JLabel jl_saTitel, jl_saAnlass, jl_saAuthor;  
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Dialogfenster Neuer Eigentümer                            //
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////  
-    JDialog showNewEigentuemer;
-    JLabel jl_sneEigentuemerId, jl_sneTitel, jl_sneAnrede, jl_sneNachname,
+    private JDialog showNewEigentuemer;
+    private JLabel jl_sneEigentuemerId, jl_sneTitel, jl_sneAnrede, jl_sneNachname,
             jl_sneVorname, jl_sneStrasse, jl_snePlz, jl_sneOrt, jl_sneGeburtstag,
             jl_sneTelefon, jl_sneEmail;
-    JButton jb_sneClear,jb_sneSave;
-    JTextField jtf_sneEigentuemerId, jtf_sneNachname, jtf_sneVorname, jtf_sneStrasse,
+    private JButton jb_sneClear,jb_sneSave;
+    private JTextField jtf_sneEigentuemerId, jtf_sneNachname, jtf_sneVorname, jtf_sneStrasse,
             jtf_snePlz, jtf_sneOrt, jtf_sneGeburtstag, jtf_sneTelefon, jtf_sneEmail;    
-    JComboBox jcb_sneTitel, jcb_sneAnrede;
-    LocalDate ld_sneGebtag;
+    private JComboBox jcb_sneTitel, jcb_sneAnrede;
+    private LocalDate ld_sneGebtag;
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Dialogfenster Neuer Mieter                                //
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////  
-    JDialog showNewMieter;
-    JLabel jl_snmMieterId, jl_snmTitel, jl_snmAnrede, jl_snmNachname,
+    private JDialog showNewMieter;
+    private JLabel jl_snmMieterId, jl_snmTitel, jl_snmAnrede, jl_snmNachname,
             jl_snmVorname, jl_snmStrasse, jl_snmPlz, jl_snmOrt, jl_snmGeburtstag,
             jl_snmTelefon, jl_snmEmail, jl_snmMieterSeid;
-    JButton jb_snmClear, jb_snmSave;
-    JTextField jtf_snmMieterId, jtf_snmNachname, jtf_snmVorname, jtf_snmStrasse,
+    private JButton jb_snmClear, jb_snmSave;
+    private JTextField jtf_snmMieterId, jtf_snmNachname, jtf_snmVorname, jtf_snmStrasse,
             jtf_snmPlz, jtf_snmOrt, jtf_snmGeburtstag, jtf_snmTelefon, jtf_snmEmail,
             jtf_snmMieterSeid;    
-    JComboBox jcb_snmTitel, jcb_snmAnrede;
-    LocalDate ld_snmGebtag, ld_snmMieterSeid;  
+    private JComboBox jcb_snmTitel, jcb_snmAnrede;
+    private LocalDate ld_snmGebtag, ld_snmMieterSeid;  
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     // Deklaration Dialogfenster Neue Ausstattung                            //
     //                                                                       //
     ///////////////////////////////////////////////////////////////////////////     
-    JDialog showNewAusstattung;
-    JLabel jl_snaAusstattung;
-    JTextField jtf_snaAusstattung;
-    JButton jb_snaClear;
-    JButton jb_snaSave;
+    private JDialog showNewAusstattung;
+    private JLabel jl_snaAusstattung;
+    private JTextField jtf_snaAusstattung;
+    private JButton jb_snaClear;
+    private JButton jb_snaSave;
+    //////////////////////////////////////////////////////////////////
+    //                                                              //
+    // Deklaration Kostenkonto                                      //
+    //                                                              //
+    ////////////////////////////////////////////////////////////////// 
+    private JPanel jp_kkto;
+    private JComboBox jcb_kktoImmo, jcb_kktoVorgang, jcb_kktoWohnung,
+            jcb_kktoMieter;
+    private JLabel jl_kktoImmobilie, jl_kktoDatum, jl_kktoGeschVorgang,
+            jl_kktoVorgang, jl_kktoBetrag, jl_kktoWohnung, jl_kktoMieter,
+            jl_kktoKaltmiete, jl_kktoNebenkosten, jl_kktoBetragKalt,
+            jl_kktoBetragNeben, jl_kktoMiete, jl_kktoBetragMiete;
+    private JTextField jtf_kktoDatum, jtf_kktoGeschVorgang, 
+            jtf_kktoBetrag;
+    private JButton jb_kktoClear, jb_kktoSave, jb_kktoOk;
+    private boolean kostenkonto;
     /**
      * Setzen des Anwendungsfensters
      * @author Markus Badzura
@@ -451,6 +468,62 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jcb_whgMieter.addItemListener(this);
     }
     /**
+     * Befüllen des Auswahlfeldes Mieter, wenn im Eingabeformular
+     * Kostenkonte Gesamtmiete ausgewählt wurde und die Wohnung
+     * ausgewählt ist.
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillKktoMieter()
+    {
+      notImplemented();
+    }
+    /**
+     * Befüllen der Felder Kaltmiete, Nebenkosten und Gesamtmiete
+     * im Eingabeformular Kostenkonto, wenn Vorgang Gesamtmiete ist
+     * und die Wohnung ausgewählt wurde.
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillKaltmieteNebenkosten()
+    {
+      notImplemented();
+    }
+    /**
+     * Befüllen des Auswahlfeldes Vorgang im Eingabeformular Kosten-
+     * konto
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillVorgang()
+    {
+      notImplemented();
+    }
+    /**
+     * Befüllen des Auswahlfeldes Wohnung im Eingabeformular Kosten-
+     * konto, wenn Vorgang Gesamtmiete
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillKktoWohnung()
+    {
+      notImplemented();
+    }
+    /**
+     * Befüllen des Auswahlfeldes Immobilie im Eingabeformular
+     * Kostenkonto
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void fillImmobilie()
+    {
+      String[] kkto_immobilie = database.getImmobilien();
+      for (int i = 0; i<kkto_immobilie.length;i++)
+      {
+        jcb_kktoImmo.addItem(kkto_immobilie[i]);
+      }
+    }
+    /**
      * Erstinitialisierung Übersicht aktuelle Immobilie bei Neuer Wohnung
      * @author Markus Badzura
      * @since 1.0.001
@@ -550,6 +623,170 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
             feld.addItem(inhalt[i]);
         }
+    }
+    /**
+     * Formularansicht für das Kostenkonto
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setKostenkonto()
+    {
+      removePanel();
+      kostenkonto = true;
+      int x1 = 10;
+      int x2 = 220;
+      int x3 = 430;
+      int x4 = 640;
+      int breite = 200;
+      int hoehe = 25;      
+      jp_kkto = new JPanel();
+      jp_kkto.setSize(this.getSize());
+      jp_kkto.setLayout(null);
+      jl_kktoImmobilie = new JLabel("Immobilie: ",JLabel.RIGHT);
+      jl_kktoImmobilie.setFont(jl_kktoImmobilie.getFont()
+              .deriveFont(14f));
+      jl_kktoImmobilie.setBounds(x1,10,breite,hoehe);
+      jl_kktoDatum = new JLabel("Datum: ",JLabel.RIGHT);
+      jl_kktoDatum.setFont(jl_kktoDatum.getFont().deriveFont(14f));
+      jl_kktoDatum.setBounds(x1,40,breite,hoehe);
+      jl_kktoGeschVorgang = new JLabel("Vorgangsbezeichnung: ",JLabel
+              .RIGHT);
+      jl_kktoGeschVorgang.setFont(jl_kktoGeschVorgang.getFont()
+              .deriveFont(14f));
+      jl_kktoGeschVorgang.setBounds(x1,70,breite,hoehe);
+      jl_kktoVorgang = new JLabel("Konto: ",JLabel.RIGHT);
+      jl_kktoVorgang.setFont(jl_kktoVorgang.getFont().deriveFont(14f));
+      jl_kktoVorgang.setBounds(x1,100,breite,hoehe);
+      jl_kktoBetrag = new JLabel("Betrag: ",JLabel.RIGHT);
+      jl_kktoBetrag.setFont(jl_kktoBetrag.getFont().deriveFont(14f));
+      jl_kktoBetrag.setBounds(x1,130,breite,hoehe);
+      jb_kktoClear = new JButton("Zurücksetzen");
+      jb_kktoClear.addActionListener(this);
+      jb_kktoClear.setBounds(x1,200,breite,hoehe);
+      jcb_kktoImmo = new JComboBox();
+      jcb_kktoImmo.setFont(jcb_kktoImmo.getFont().deriveFont(14f));
+      jcb_kktoImmo.setBounds(x2,10,breite,hoehe);
+      fillImmobilie();
+      jtf_kktoDatum = new JTextField();
+      jtf_kktoDatum.setFont(jtf_kktoDatum.getFont().deriveFont(14f));
+      jtf_kktoDatum.setBounds(x2,40,breite,hoehe);
+      jtf_kktoGeschVorgang = new JTextField();
+      jtf_kktoGeschVorgang.setFont(jtf_kktoGeschVorgang.getFont()
+              .deriveFont(14f));
+      jtf_kktoGeschVorgang.setBounds(x2,70,breite,hoehe);
+      jcb_kktoVorgang = new JComboBox();
+      jcb_kktoVorgang.setFont(jcb_kktoVorgang.getFont().deriveFont(14f));
+      jcb_kktoVorgang.setBounds(x2,100,breite,hoehe);
+      fillVorgang();
+      jtf_kktoBetrag = new JTextField();
+      jtf_kktoBetrag.setFont(jtf_kktoBetrag.getFont().deriveFont(14));
+      jtf_kktoBetrag.setBounds(x2,130,breite,hoehe);
+      jb_kktoSave = new JButton("Speichern");
+      jb_kktoSave.addActionListener(this);
+      jb_kktoSave.setBounds(x2,200,breite,hoehe);
+      jl_kktoWohnung = new JLabel("Wohnung: ",JLabel.RIGHT);
+      jl_kktoWohnung.setFont(jl_kktoWohnung.getFont().deriveFont(14f));
+      jl_kktoWohnung.setBounds(x3,10,breite,hoehe);
+      jl_kktoWohnung.setVisible(false);
+      jcb_kktoWohnung = new JComboBox();
+      jcb_kktoWohnung.setFont(jcb_kktoWohnung.getFont()
+              .deriveFont(14f));
+      jcb_kktoWohnung.setBounds(x4,10,breite,hoehe);
+      fillKktoWohnung();
+      jcb_kktoWohnung.setVisible(false);
+      jl_kktoMieter = new JLabel("Mieter: ",JLabel.RIGHT);
+      jl_kktoMieter.setFont(jl_kktoMieter.getFont().deriveFont(14f));
+      jl_kktoMieter.setBounds(x3,40,breite,hoehe);
+      jl_kktoMieter.setVisible(false);
+      jcb_kktoMieter = new JComboBox();
+      jcb_kktoMieter.setFont(jcb_kktoMieter.getFont().deriveFont(14f));
+      jcb_kktoMieter.setBounds(x4,40,breite,hoehe);
+      jcb_kktoMieter.setVisible(false);
+      fillKktoMieter();
+      jl_kktoKaltmiete = new JLabel("Kaltmiete: ",JLabel.RIGHT);
+      jl_kktoKaltmiete.setFont(jl_kktoKaltmiete.getFont()
+              .deriveFont(14f));
+      jl_kktoKaltmiete.setBounds(x3,70,breite,hoehe);
+      jl_kktoKaltmiete.setVisible(false);
+      jl_kktoBetragKalt = new JLabel("");
+      jl_kktoBetragKalt.setFont(jl_kktoBetragKalt.getFont()
+              .deriveFont(14f));
+      jl_kktoBetragKalt.setBounds(x4,70,breite,hoehe);
+      jl_kktoBetragKalt.setVisible(false);
+      jl_kktoNebenkosten = new JLabel("Nebenkosten: ",JLabel.RIGHT);
+      jl_kktoNebenkosten.setFont(jl_kktoNebenkosten.getFont()
+              .deriveFont(14f));
+      jl_kktoNebenkosten.setBounds(x3,100,breite,hoehe);
+      jl_kktoNebenkosten.setVisible(false);
+      jl_kktoBetragNeben = new JLabel("");
+      jl_kktoBetragNeben.setFont(jl_kktoBetragNeben.getFont()
+              .deriveFont(14f));
+      jl_kktoBetragNeben.setBounds(x4,100,breite,hoehe);
+      jl_kktoBetragNeben.setVisible(false);
+      jb_kktoOk = new JButton("Übernehmen");
+      jb_kktoOk.addActionListener(this);
+      jb_kktoOk.setBounds(x4,200,breite,hoehe);
+      jb_kktoOk.setVisible(false);
+      jl_kktoMiete = new JLabel("Gesamtmiete: ",JLabel.RIGHT);
+      jl_kktoMiete.setFont(jl_kktoMiete.getFont().deriveFont(14f));
+      jl_kktoMiete.setBounds(x3,130,breite,hoehe);
+      jl_kktoMiete.setVisible(false);
+      jl_kktoBetragMiete = new JLabel("");
+      jl_kktoBetragMiete.setFont(jl_kktoBetragMiete.getFont()
+              .deriveFont(14f));
+      jl_kktoBetragMiete.setBounds(x4,130,breite,hoehe);
+      jl_kktoBetragMiete.setVisible(false);
+      jp_kkto.add(jl_kktoBetragMiete);
+      jp_kkto.add(jl_kktoMiete);
+      jp_kkto.add(jb_kktoOk);
+      jp_kkto.add(jl_kktoBetragNeben);
+      jp_kkto.add(jl_kktoNebenkosten);
+      jp_kkto.add(jl_kktoBetragKalt);
+      jp_kkto.add(jl_kktoKaltmiete);
+      jp_kkto.add(jcb_kktoMieter);
+      jp_kkto.add(jl_kktoMieter);
+      jp_kkto.add(jcb_kktoWohnung);
+      jp_kkto.add(jl_kktoWohnung);
+      jp_kkto.add(jb_kktoSave);
+      jp_kkto.add(jtf_kktoBetrag);
+      jp_kkto.add(jcb_kktoVorgang);
+      jp_kkto.add(jtf_kktoGeschVorgang);
+      jp_kkto.add(jtf_kktoDatum);
+      jp_kkto.add(jcb_kktoImmo);
+      jp_kkto.add(jb_kktoClear);
+      jp_kkto.add(jl_kktoBetrag);
+      jp_kkto.add(jl_kktoVorgang);
+      jp_kkto.add(jl_kktoGeschVorgang);
+      jp_kkto.add(jl_kktoDatum);
+      jp_kkto.add(jl_kktoImmobilie);
+      this.add(jp_kkto);
+      this.repaint();
+//      this.setVisible(true);
+    }
+    /**
+     * Anzeige der Wohnungen, wenn als Auswahlpunkt bei Vorgang
+     * Gesamtmiete im Kostenkonto ausgewählt wurde
+     * @param show boolean true für anzeigen, false für ausblenden
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void setShowMiete(boolean show)
+    {
+      jl_kktoBetragMiete.setVisible(show);
+      jl_kktoMiete.setVisible(show);
+      jb_kktoOk.setVisible(show);
+      jl_kktoBetragNeben.setVisible(show);
+      jl_kktoNebenkosten.setVisible(show);
+      jl_kktoBetragKalt.setVisible(show);
+      jl_kktoKaltmiete.setVisible(show);
+      jcb_kktoMieter.setVisible(show);
+      jl_kktoMieter.setVisible(show);
+      jcb_kktoWohnung.setVisible(show);
+      jl_kktoWohnung.setVisible(show);
+      if (show)
+      {
+        fillKaltmieteNebenkosten();
+      }
     }
     /**
      * Panel für Tab Neue Wohnung
@@ -749,6 +986,16 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jp_immobilie.add(jcb_immoWohnlage);
         jp_immobilie.add(jcb_immoEigentuemer);
         jp_immobilie.add(jb_immoNeu);        
+    }
+    /**
+     * logische Überprüfung der eingegebenen Werte auf Datenbankkon-
+     * sistenz, Richtigkeit und Vollständigkeit der Eintragungen.
+     * @author Markus Badzura
+     * @since 1.0.001
+     */
+    private void pruefeKostenkonto()
+    {
+      notImplemented();
     }
     /**
      * logische Überprüfung der eingegebenen Werte auf Datenbankkon-
@@ -1090,10 +1337,6 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
                     .getSelectedIndex(), jcb_whgHeizung.getSelectedIndex(), 
                     jcb_whgBad.getSelectedIndex(), jtf_whgZusatz.getText()
                     .trim(), prWhg_kaltmiete, prWhg_nebenkosten);
-//            (String wohnungsid, String mieter, double qm, double zimmer, 
-//            String kueche, String heizung, String bad, String zusatz, 
-//            double kaltmiete, double nebenkosten)
-//            tempIw = new Immo_wohnungen(jtf)
             fillWhgUebersicht();
             jp_wohnungen.repaint();
             resetWohnung();
@@ -1124,6 +1367,30 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         jtf_whgNebenkosten.setText("");
         jtf_whgId.requestFocus();
     }
+    private void removePanel()
+    {
+      if(immobilie)
+      {
+        this.remove(jtp_immobilie);
+        immobilie = false;
+        this.repaint();
+      }
+      if (kostenkonto)
+      {
+        this.remove(jp_kkto);
+        kostenkonto = false;
+        this.repaint();
+      }
+    }
+    /**
+     * Übernahme der in der Datenbank gespeicherten Kaltmiete und
+     * Nebenkosten im Forumular Kostenkonto, wenn Vorgang Gesamtmiete
+     * ist und Wohnung ausgewählt wurde.
+     */
+    private void setMiete()
+    {
+      notImplemented();
+    }
     /**
      * Fensteransicht für das Anlegen einer neuen Immobilie
      * @author Markus Badzura
@@ -1131,18 +1398,18 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
      */
     private void setImmoNew()
     {
-        this.remove(this.getContentPane());
-        this.repaint();
-        jtp_immobilie = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-        jtp_immobilie.setSize(this.getSize());
-        setTabNewImmobilie();
-        setTabNewWohnung();       
-        jtp_immobilie.add("Neue Immobilie",jp_immobilie);
-        jtp_immobilie.add("Wohnungen der Immobilie",jp_wohnungen);  
-        jtp_immobilie.setEnabledAt(1, false);
-        this.remove(this.getContentPane());
-        this.add(jtp_immobilie);
-        this.setVisible(true);
+      removePanel();
+      immobilie = true;
+      jtp_immobilie = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+      jtp_immobilie.setSize(this.getSize());
+      setTabNewImmobilie();
+      setTabNewWohnung();       
+      jtp_immobilie.add("Neue Immobilie",jp_immobilie);
+      jtp_immobilie.add("Wohnungen der Immobilie",jp_wohnungen);  
+      jtp_immobilie.setEnabledAt(1, false);
+      this.remove(this.getContentPane());
+      this.add(jtp_immobilie);
+      this.setVisible(true);
     }
     /**
      * Prüfung, ob alle Pflichtfelder ausgefüllt sind und ob die Konventionen
@@ -1818,7 +2085,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         // Menüpunkt KOSTENKONTO - KONTOBEWEGUNGEN
         if (e.getSource() == jmi_kkt_change)
         {
-            notImplemented();
+            setKostenkonto();
         }
         // Menüpunkt KOSTENKONTO - BETRIEBSKOSTENABRECHNUNG
         if (e.getSource() == jmi_kkt_bka)
@@ -1882,6 +2149,26 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         {
           pruefeAusstattung();
         }
+        // Button Kostenkonto Eingabe zurücksetzen
+        if (e.getSource() == jb_kktoClear)
+        {
+          jcb_kktoImmo.setSelectedIndex(0);
+          jtf_kktoDatum.setText("");
+          jtf_kktoGeschVorgang.setText("");
+          jcb_kktoVorgang.setSelectedIndex(0);
+          jtf_kktoBetrag.setText("");
+          jcb_kktoImmo.requestFocus();
+        }
+        // Button Kostenkonte speichern
+        if (e.getSource() == jb_kktoSave)
+        {
+          pruefeKostenkonto();
+        }
+        // Button Übernehmen der Miete
+        if (e.getSource() == jb_kktoOk)
+        {
+          setMiete();
+        }
     }
     /**
      * KeyListener Aktion für keyTyped
@@ -1904,7 +2191,7 @@ public class Immo_gui extends JFrame implements ActionListener, KeyListener, Ite
         // Tastenkombination STRG + K (Kontobewegung Kostenkonto)
         if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_K)
         {
-            notImplemented();
+            setKostenkonto();
         }
         // Tastenkombination STRG + N (Neue Immobilie anlegen)
         if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_N)

@@ -352,7 +352,7 @@ public class Immo_db
         int anzahl = 0;
         String query = "SELECT Count(*) FROM eigentuemer";
         openDB();
-        ResultSet resultSet = selectDB(query); 
+        resultSet = selectDB(query); 
         try
         {
             while (resultSet.next())
@@ -383,6 +383,41 @@ public class Immo_db
         closeDB();
         return eigentuemer;
     }    
+    public String[] getImmobilien()
+    {
+        int anzahl = 0;
+        String query = "SELECT Count(*) FROM immobilien";
+        openDB();
+        resultSet = selectDB(query); 
+        try
+        {
+            while (resultSet.next())
+            {
+                anzahl = resultSet.getInt("Count(*)");
+            }
+        }
+        catch(SQLException se)
+        {
+        }     
+        String[] immobilien = new String[(anzahl)+1];
+        query = "SELECT CONCAT (immobiliennummer,' * ',strasse) AS bez FROM immobilien";
+        immobilien[0] = "Bitte wählen...";
+        resultSet = selectDB(query); 
+        try
+        {
+          int zaehler = 1;
+          while (resultSet.next())
+          {
+              immobilien[zaehler] = resultSet.getString("bez");
+              zaehler++;
+          }
+        }
+        catch(SQLException se)
+        {
+        }     
+        closeDB();
+        return immobilien;              
+    }
     /**
      * Vorhandene Mieter auslesen für Auswahlfeld
      * @return mieter String[] mit vorhanden Mieter mit Vor- und Nachnamen
@@ -508,6 +543,7 @@ public class Immo_db
     /**
      * Select-Anweisungen ausführen
      * @param query Select-Anweisung
+     * @return resultSet ResultSet mit Abfrageergebnis
      * @author Markus Badzura
      * @since 1.0.001
      */
@@ -519,9 +555,7 @@ public class Immo_db
             resultSet = statement.executeQuery(query);
         }
         catch(SQLException e)
-        {
-//            JOptionPane.showMessageDialog(null,"Datenbankanfrage kann nicht verarbeitet werden.",
-//                    "Datenbankfehler",JOptionPane.OK_OPTION);            
+        {         
         }
         return resultSet;
     }    
